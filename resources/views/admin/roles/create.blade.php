@@ -1,0 +1,34 @@
+@extends('layouts.admin')
+
+@section('title', __('roles.create'))
+@section('page_title', __('roles.create'))
+
+@section('content')
+<div class="card">
+    <div class="card-body">
+        <form method="POST" action="{{ route('admin.roles.store') }}">
+            @csrf
+
+            <div class="mb-4">
+                <label for="name" class="form-label fw-semibold">{{ __('roles.name') }}</label>
+                <input type="text" name="name" id="name"
+                       class="form-control @error('name') is-invalid @enderror"
+                       value="{{ old('name') }}" required autofocus
+                       placeholder="{{ __('roles.name_placeholder') }}">
+                @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+
+            @include('admin.roles._permission-groups', ['selectedPermissions' => old('permissions', [])])
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> {{ __('common.save') }}
+                </button>
+                <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary">
+                    {{ __('common.cancel') }}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
