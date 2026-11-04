@@ -60,4 +60,7 @@ return [
     'not_found' => 'The requested resource was not found.',
     'confirm_delete' => 'Are you sure you want to delete this item?',
     'unsaved_changes' => 'You have unsaved changes. Continue?',
+    'language' => 'Language',
+'administrator' => 'Administrator',
+'toggle_theme' => 'Toggle dark/light mode',
 ];

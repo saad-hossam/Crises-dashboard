@@ -1,40 +1,115 @@
+/* =========================================================
+   ADMIN DASHBOARD INTERACTIONS
+========================================================= */
+
 document.addEventListener('DOMContentLoaded', () => {
+
     const wrapper = document.getElementById('adminWrapper');
-    const toggleBtn = document.getElementById('sidebarToggle');
-    const backdrop = document.getElementById('sidebarBackdrop');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    const sidebar = document.getElementById('adminSidebar');
 
-    if (!wrapper || !toggleBtn) return;
+    if (!wrapper || !sidebarToggle) return;
 
-    const isMobile = () => window.innerWidth < 992;
+    const mobileBreakpoint = 992;
 
-    // Persist desktop collapse state
-    const savedState = localStorage.getItem('sidebarCollapsed');
-    if (savedState === 'true' && !isMobile()) {
-        wrapper.classList.add('sidebar-collapsed');
-    }
+    const isMobile = () => window.innerWidth < mobileBreakpoint;
 
-    toggleBtn.addEventListener('click', () => {
+    // Toggle sidebar
+    sidebarToggle.addEventListener('click', () => {
+
         if (isMobile()) {
             wrapper.classList.toggle('sidebar-mobile-open');
         } else {
             wrapper.classList.toggle('sidebar-collapsed');
-            localStorage.setItem(
-                'sidebarCollapsed',
-                wrapper.classList.contains('sidebar-collapsed')
-            );
         }
+
     });
 
-    if (backdrop) {
-        backdrop.addEventListener('click', () => {
-            wrapper.classList.remove('sidebar-mobile-open');
+    // Close mobile sidebar
+    const closeMobileSidebar = () => {
+        wrapper.classList.remove('sidebar-mobile-open');
+    };
+
+    // Backdrop click
+    sidebarBackdrop?.addEventListener('click', closeMobileSidebar);
+
+    // Close after navigation
+    sidebar?.querySelectorAll('.nav-link').forEach(link => {
+
+        link.addEventListener('click', () => {
+
+            if (isMobile()) {
+                closeMobileSidebar();
+            }
+
         });
+
+    });
+
+    // Escape key
+    document.addEventListener('keydown', event => {
+
+        if (event.key === 'Escape') {
+            closeMobileSidebar();
+        }
+
+    });
+
+    // Handle window resizing
+    window.addEventListener('resize', () => {
+
+        if (!isMobile()) {
+            closeMobileSidebar();
+        }
+
+    });
+
+});
+
+/* ========================================
+   DARK / LIGHT MODE
+======================================== */
+
+document.addEventListener('DOMContentLoaded', function () {
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+
+    if (!themeToggle || !themeIcon) {
+        return;
     }
 
-    // Close mobile sidebar on resize to desktop
-    window.addEventListener('resize', () => {
-        if (!isMobile()) {
-            wrapper.classList.remove('sidebar-mobile-open');
-        }
+    const savedTheme = localStorage.getItem('admin-theme') || 'light';
+
+    applyTheme(savedTheme);
+
+    themeToggle.addEventListener('click', function () {
+        const isDark = document.body.classList.contains('dark-mode');
+
+        const newTheme = isDark ? 'light' : 'dark';
+
+        applyTheme(newTheme);
+
+        localStorage.setItem('admin-theme', newTheme);
     });
+
+    function applyTheme(theme) {
+        const isDark = theme === 'dark';
+
+        document.body.classList.toggle('dark-mode', isDark);
+
+        themeIcon.className = isDark
+            ? 'bi bi-sun'
+            : 'bi bi-moon-stars';
+
+        themeToggle.setAttribute(
+            'aria-label',
+            isDark ? 'Switch to light mode' : 'Switch to dark mode'
+        );
+
+        themeToggle.setAttribute(
+            'title',
+            isDark ? 'Light Mode' : 'Dark Mode'
+        );
+    }
 });

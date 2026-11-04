@@ -1,9 +1,4 @@
 
-<!DOCTYPE html>
-<html
-    lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-    dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"
->
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,9 +9,25 @@
         — {{ __('common.app_name') }}
     </title>
 
-  @vite(['resources/css/app.scss', 'resources/css/admin.css'])
+    {{-- Bootstrap 5 --}}
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
 
-    
+    {{-- Bootstrap Icons --}}
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        rel="stylesheet"
+    >
+
+    {{-- Admin Dashboard CSS --}}
+    <link
+        rel="stylesheet"
+        href="{{ asset('assets/css/admin.css') }}?v={{ filemtime(public_path('assets/css/admin.css')) }}"
+    >
+
+    @stack('styles')
 </head>
 
 <body class="admin-body">
@@ -40,7 +51,13 @@
             </main>
 
             @include('components.admin.footer')
-@vite(['resources/js/app.js', 'resources/js/admin.js'])
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="{{ asset('assets/js/admin.js') }}?v={{ filemtime(public_path('assets/js/admin.js')) }}"></script>
+
+@stack('scripts')
+
 @stack('scripts')
 
         </div>

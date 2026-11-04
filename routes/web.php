@@ -1,14 +1,30 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ImportController;
-use App\Http\Controllers\Admin\PermissionController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\LanguageController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\ImportController;
+use App\Http\Controllers\ImportHistoryController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\ImportDashboardController;
+
+use App\Http\Controllers\Admin\PermissionController;
+
+Route::get('/imports/dashboard', [
+    ImportDashboardController::class,
+    'index',
+])->name('imports.dashboard');
+
+Route::get('/imports/history', [ImportHistoryController::class, 'index'])
+    ->name('imports.history');
+
+Route::get('/imports/history/{batch}', [
+    ImportHistoryController::class,
+    'show',
+])->name('imports.history.show');
 
 /*
 |--------------------------------------------------------------------------
