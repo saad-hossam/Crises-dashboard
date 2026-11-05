@@ -3,169 +3,221 @@
 
 @section('title', __('auth.login_title'))
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('assets/css/auth.css') }}?v=2">
+@endpush
+
 @section('content')
 
-<div class="auth-container">
-    <div class="auth-card">
+<div class="auth-page">
 
-        {{-- Header --}}
-        <div class="auth-header">
+    {{-- Animated Background --}}
+    <div class="auth-background">
+        <div class="auth-orb auth-orb-one"></div>
+        <div class="auth-orb auth-orb-two"></div>
+        <div class="auth-orb auth-orb-three"></div>
+        <div class="auth-grid"></div>
+    </div>
 
-            <div class="auth-logo">
-                <i class="bi bi-shield-exclamation"></i>
+    <div class="auth-container">
+
+        {{-- Brand --}}
+        <div class="auth-brand">
+            <div class="auth-brand-icon">
+                <i class="bi bi-shield-lock-fill"></i>
             </div>
 
-            <h1 class="auth-title">
-                {{ __('auth.login_title') }}
-            </h1>
-
-            <p class="auth-subtitle">
-                {{ __('auth.login_subtitle') }}
-            </p>
-
+            <span>{{ __('common.app_name') }}</span>
         </div>
 
-        {{-- Session Errors --}}
-        @if (session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        {{-- Login Card --}}
+        <div class="auth-card">
+
+            <div class="auth-header">
+
+                <div class="auth-logo">
+                    <i class="bi bi-person-lock"></i>
+                </div>
+
+                <span class="auth-eyebrow">
+                    {{ __('auth.login_title') }}
+                </span>
+
+                <h1 class="auth-title">
+                    {{ __('auth.login_title') }}
+                </h1>
+
+                <p class="auth-subtitle">
+                    {{ __('auth.login_subtitle') }}
+                </p>
+
             </div>
-        @endif
 
-        {{-- Login Form --}}
-        <form method="POST" action="{{ route('login') }}" id="loginForm">
-            @csrf
+            {{-- Session Error --}}
+            @if (session('error'))
+                <div class="auth-alert" role="alert">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <span>{{ session('error') }}</span>
+                </div>
+            @endif
 
-            {{-- Email --}}
-            <div class="mb-3">
-
-                <label for="email" class="form-label">
-                    {{ __('auth.email') }}
-                </label>
-
-                <input
-                    type="email"
-                    class="form-control @error('email') is-invalid @enderror"
-                    id="email"
-                    name="email"
-                    value="{{ old('email') }}"
-                    placeholder="{{ __('auth.email_placeholder') }}"
-                    required
-                    autofocus
-                    autocomplete="email"
-                >
-
-                @error('email')
-                    <div class="invalid-feedback">
-                        {{ $message }}
+            {{-- Validation Errors --}}
+            @if ($errors->any())
+                <div class="auth-alert" role="alert">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    <div>
+                        @foreach ($errors->all() as $error)
+                            <div>{{ $error }}</div>
+                        @endforeach
                     </div>
-                @enderror
+                </div>
+            @endif
 
-            </div>
+            <form
+                method="POST"
+                action="{{ route('login') }}"
+                id="loginForm"
+            >
+                @csrf
 
-            {{-- Password --}}
-            <div class="mb-3">
+                {{-- Email --}}
+                <div class="auth-field">
 
-                <label for="password" class="form-label">
-                    {{ __('auth.password') }}
-                </label>
+                    <label for="email" class="auth-label">
+                        {{ __('auth.email') }}
+                    </label>
 
-                <div class="input-group">
+                    <div class="auth-input-wrapper">
+                        <i class="bi bi-envelope auth-input-icon"></i>
 
-                    <input
-                        type="password"
-                        class="form-control @error('password') is-invalid @enderror"
-                        id="password"
-                        name="password"
-                        placeholder="{{ __('auth.password_placeholder') }}"
-                        required
-                        autocomplete="current-password"
-                    >
+                        <input
+                            type="email"
+                            class="auth-input @error('email') is-invalid @enderror"
+                            id="email"
+                            name="email"
+                            value="{{ old('email') }}"
+                            placeholder="{{ __('auth.email_placeholder') }}"
+                            required
+                            autofocus
+                            autocomplete="email"
+                        >
+                    </div>
 
-                    <button
-                        class="btn btn-outline-secondary"
-                        type="button"
-                        id="togglePassword"
-                        aria-label="{{ __('auth.show_password') }}"
-                    >
-                        <i class="bi bi-eye" id="toggleIcon"></i>
-                    </button>
+                    @error('email')
+                        <div class="auth-field-error">{{ $message }}</div>
+                    @enderror
 
                 </div>
 
-                @error('password')
-                    <div class="text-danger small mt-1">
-                        {{ $message }}
+                {{-- Password --}}
+                <div class="auth-field">
+
+                    <label for="password" class="auth-label">
+                        {{ __('auth.password') }}
+                    </label>
+
+                    <div class="auth-input-wrapper">
+                        <i class="bi bi-lock auth-input-icon"></i>
+
+                        <input
+                            type="password"
+                            class="auth-input"
+                            id="password"
+                            name="password"
+                            placeholder="{{ __('auth.password_placeholder') }}"
+                            required
+                            autocomplete="current-password"
+                        >
+
+                        <button
+                            type="button"
+                            class="auth-password-toggle"
+                            id="togglePassword"
+                            aria-label="{{ __('auth.show_password') }}"
+                            aria-pressed="false"
+                        >
+                            <i class="bi bi-eye" id="toggleIcon"></i>
+                        </button>
                     </div>
-                @enderror
 
-            </div>
+                    @error('password')
+                        <div class="auth-field-error">{{ $message }}</div>
+                    @enderror
 
-            {{-- Remember Me --}}
-            <div class="mb-4 form-check">
+                </div>
 
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    id="remember"
-                    name="remember"
-                    value="1"
+                {{-- Remember Me --}}
+                <div class="auth-options">
+
+                    <label class="auth-checkbox">
+                        <input
+                            type="checkbox"
+                            name="remember"
+                            id="remember"
+                            value="1"
+                        >
+
+                        <span class="auth-checkmark">
+                            <i class="bi bi-check"></i>
+                        </span>
+
+                        <span>{{ __('auth.remember_me') }}</span>
+                    </label>
+
+                </div>
+
+                {{-- Submit --}}
+                <button
+                    type="submit"
+                    class="auth-submit"
+                    id="loginBtn"
                 >
+                    <span class="auth-submit-content" id="loginBtnText">
+                        {{ __('auth.login_button') }}
+                        <i class="bi bi-arrow-left-right"></i>
+                    </span>
 
-                <label class="form-check-label" for="remember">
-                    {{ __('auth.remember_me') }}
-                </label>
+                    <span class="auth-submit-loading d-none" id="loginSpinner">
+                        <span class="auth-spinner"></span>
+                        <span>{{ __('auth.signing_in') }}</span>
+                    </span>
+                </button>
 
+            </form>
+
+            {{-- Language Switch --}}
+            <div class="auth-language">
+                <span class="auth-language-divider"></span>
+
+                @if (app()->getLocale() === 'en')
+                    <a href="{{ route('language.switch', 'ar') }}">
+                        <i class="bi bi-translate"></i>
+                        العربية
+                    </a>
+                @else
+                    <a href="{{ route('language.switch', 'en') }}">
+                        <i class="bi bi-translate"></i>
+                        English
+                    </a>
+                @endif
+
+                <span class="auth-language-divider"></span>
             </div>
-
-            {{-- Submit --}}
-            <button
-                type="submit"
-                class="btn btn-primary w-100"
-                id="loginBtn"
-            >
-
-                <span
-                    class="spinner-border spinner-border-sm d-none"
-                    id="loginSpinner"
-                    role="status"
-                    aria-hidden="true"
-                ></span>
-
-                <span
-                    id="loginBtnText"
-                    data-loading="{{ __('auth.signing_in') }}"
-                >
-                    {{ __('auth.login_button') }}
-                </span>
-
-            </button>
-
-        </form>
-
-        {{-- Language Switch --}}
-        <div class="auth-language mt-4 text-center">
-
-            @if (app()->getLocale() === 'en')
-
-                <a href="{{ route('language.switch', 'ar') }}">
-                    <i class="bi bi-translate"></i>
-                    {{ __('common.arabic') }}
-                </a>
-
-            @else
-
-                <a href="{{ route('language.switch', 'en') }}">
-                    <i class="bi bi-translate"></i>
-                    {{ __('common.english') }}
-                </a>
-
-            @endif
 
         </div>
 
+        {{-- Footer --}}
+        <div class="auth-footer">
+            <i class="bi bi-shield-check"></i>
+            <span>{{ __('common.app_name') }}</span>
+        </div>
+
     </div>
+
 </div>
 
 @endsection
+
+@push('scripts')
+    <script src="{{ asset('assets/js/auth.js') }}?v=2"></script>
+@endpush
