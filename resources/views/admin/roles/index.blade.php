@@ -18,7 +18,6 @@
                 <tr>
                     <th>#</th>
                     <th>{{ __('roles.name') }}</th>
-                    <th>{{ __('roles.users_count') }}</th>
                     <th>{{ __('roles.permissions_count') }}</th>
                     <th>{{ __('roles.created_at') }}</th>
                     <th>{{ __('common.actions') }}</th>
@@ -36,11 +35,7 @@
                                 </span>
                             @endif
                         </td>
-                        <td>
-                            <span class="badge bg-info-subtle text-info-emphasis">
-                                {{ $role->users_count }}
-                            </span>
-                        </td>
+                       
                         <td>
                             <span class="badge bg-secondary-subtle text-secondary-emphasis">
                                 {{ $role->permissions_count ?? '—' }}

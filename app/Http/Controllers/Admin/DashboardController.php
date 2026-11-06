@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ImportBatch;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
@@ -34,7 +33,6 @@ class DashboardController extends Controller
                 'color' => 'warning',
                 'note'  => null,
             ],
-            
         ];
 
         return view('admin.dashboard.index', compact('stats'));

@@ -37,7 +37,19 @@
                 </li>
             @endcan
 
-          
+
+            {{-- Dynamic Excel Modules --}}
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.excel-modules.*') ? 'active' : '' }}"
+                   href="{{ route('admin.excel-modules.dashboard') }}"
+                   data-tooltip="بيانات Excel">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    <span>بيانات Excel</span>
+                    @if (request()->routeIs('admin.excel-modules.*'))
+                        <span class="nav-active-dot" aria-hidden="true"></span>
+                    @endif
+                </a>
+            </li>
 
             {{-- ============ Management section ============ --}}
             @if (auth()->user()->can('users.view')

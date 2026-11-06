@@ -18,7 +18,7 @@ class UnitController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
-        $units = $query->latest('id')->paginate(15)->withQueryString();
+        $units = $query->latest('id')->paginate(20)->withQueryString();
 
         return view('admin.units.index', compact('units'));
     }
