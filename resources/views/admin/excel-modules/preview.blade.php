@@ -24,6 +24,7 @@
                 <div class="text-muted small">الموديول</div>
                 <div class="fw-semibold">{{ $preview['module_name_ar'] ?? '—' }}</div>
                 <div class="small text-primary">{{ $preview['module_code'] ?? '' }}</div>
+                <div class="small text-muted">→ <code>{{ $preview['table'] ?? '' }}</code></div>
             </div>
         </div>
     </div>

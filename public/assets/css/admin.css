@@ -4,14 +4,17 @@
 ========================================================= */
 
 :root {
-    /* AOI Brand Colors */
-    --admin-primary: #17365D;
-    --admin-primary-dark: #102944;
-    --admin-primary-light: #EAF0F7;
 
-    --admin-accent: #E87524;
-    --admin-accent-dark: #CF5F15;
-    --admin-accent-light: #FFF1E7;
+    --admin-primary: #E87524;
+    --admin-primary-dark: #CF5F15;
+    --admin-primary-light: #FFF1E7;
+    /* AOI Brand Colors */
+    
+    
+
+    --admin-accent: #17365D;
+    --admin-accent-dark: #102944;
+    --admin-accent-light: #EAF0F7;
 
     /* Sidebar */
     --admin-sidebar: #172B45;
@@ -58,7 +61,7 @@ body.admin-body {
     background: var(--admin-bg);
     color: var(--admin-text);
     font-family: Inter, "Cairo", sans-serif;
-    font-size: 14px;
+    font-size: 18px;
     overflow-x: hidden;
 }
 
@@ -210,7 +213,7 @@ button {
     padding: 11px 13px;
 
     color: #b8c5d8;
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 600;
 
     border-radius: 10px;

@@ -62,6 +62,9 @@ class ProductionLine extends Model
         'created_by',
         'updated_by',
         'import_batch_id',
+        'module_import_batch_id',
+        'unit_code',
+        'unit_name',
     ];
 
     /*

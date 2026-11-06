@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Exports\ExcelModuleExport;
-use App\Http\Controllers\Controller;
-use App\Models\ExcelImportBatch;
 use App\Models\ExcelModule;
 use App\Models\ExcelRecord;
-use App\Services\GenericExcelImporter;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Models\ExcelImportBatch;
+use App\Models\ModuleImportBatch;
+use App\Exports\ExcelModuleExport;
+use App\Http\Controllers\Controller;
+use App\Services\TypedExcelImporter;
 use Maatwebsite\Excel\Facades\Excel;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ExcelModuleController extends Controller
 {
     public function __construct(
-        private readonly GenericExcelImporter $importer
+        private readonly TypedExcelImporter $importer
     ) {}
 
     /**
@@ -60,15 +61,152 @@ class ExcelModuleController extends Controller
     /**
      * List all modules
      */
-    public function index()
+public function index()
     {
-        $modules = ExcelModule::withCount(['records', 'batches'])->orderBy('name_ar')->get();
+        $registry = config('excel_modules', []);
+        $modules = [];
+        foreach ($registry as $code => $cfg) {
+            $model = $cfg['model'];
+            $count = class_exists($model) ? $model::count() : 0;
+            $lastBatch = ModuleImportBatch::where('module_code', $code)->latest()->first();
+            $modules[] = [
+                'code' => $code,
+                'name_ar' => $cfg['name_ar'],
+                'table' => $cfg['table'],
+                'records_count' => $count,
+                'last_imported_at' => $lastBatch?->created_at,
+            ];
+        }
         return view('admin.excel-modules.index', compact('modules'));
     }
 
     /**
      * Show upload form
      */
+
+    /**
+     * عرض بيانات جدول موديول مخصص (production_lines, companies, ...)
+     */
+  public function showTable(string $moduleCode, Request $request)
+{
+    $config = config('excel_modules.' . $moduleCode);
+    if (!$config) {
+        abort(404, 'موديول غير معروف: ' . $moduleCode);
+    }
+
+    $modelClass = $config['model'] ?? null;
+    if (!$modelClass || !class_exists($modelClass)) {
+        abort(404, 'موديول غير مهيأ: ' . $moduleCode);
+    }
+
+    $query = $modelClass::query();
+
+    // بحث عام في كل الأعمدة
+    if ($q = trim((string) $request->get('q'))) {
+        $query->where(function ($qq) use ($q, $config) {
+            foreach (array_values($config['columns']) as $col) {
+                $qq->orWhere($col, 'like', '%' . $q . '%');
+            }
+        });
+    }
+
+    // فلترة باسم الوحدة
+    if ($unitName = trim((string) $request->get('unit_name'))) {
+        $query->where('unit_name', 'like', '%' . $unitName . '%');
+    }
+
+    $perPage = (int) $request->get('per_page', 50);
+    $perPage = in_array($perPage, [25, 50, 100, 200], true) ? $perPage : 50;
+
+    // ترتيب تصاعدي
+    $records = $query->orderBy('id')->paginate($perPage)->withQueryString();
+
+    $columns = array_values(array_unique(array_values($config['columns'])));
+
+    // أعمدة العرض الأساسية أولاً
+    $priority = ['unit_code', 'unit_name', 'name', 'name_ar', 'site_name', 'warehouse_name',
+        'facility_name', 'product_name', 'governorate', 'operating_status', 'owner_organization'];
+
+    usort($columns, function ($a, $b) use ($priority) {
+        $ia = array_search($a, $priority, true);
+        $ib = array_search($b, $priority, true);
+        $ia = $ia === false ? 99 : $ia;
+        $ib = $ib === false ? 99 : $ib;
+        return $ia <=> $ib;
+    });
+
+    $batches = ModuleImportBatch::where('module_code', $moduleCode)
+        ->latest()->limit(5)->get();
+
+    // أسماء الوحدات المتاحة لاقتراحات Datalist
+    $unitNames = $modelClass::query()
+        ->whereNotNull('unit_name')
+        ->where('unit_name', '!=', '')
+        ->distinct()
+        ->orderBy('unit_name')
+        ->pluck('unit_name');
+
+    // Charts للموديول
+    $chartStatus = ['labels' => [], 'data' => []];
+    $chartGov = ['labels' => [], 'data' => []];
+    $chartReadiness = ['labels' => [], 'data' => []];
+    $totalCount = $modelClass::count();
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'operating_status')) {
+            $rows = $modelClass::selectRaw('operating_status as k, count(*) as c')
+                ->whereNotNull('operating_status')->where('operating_status', '!=', '')
+                ->groupBy('operating_status')->orderByDesc('c')->limit(8)->pluck('c', 'k');
+            $chartStatus = ['labels' => array_values($rows->keys()->all()), 'data' => array_map('intval', array_values($rows->all()))];
+        }
+        if (\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'governorate')) {
+            $rows = $modelClass::selectRaw('governorate as k, count(*) as c')
+                ->whereNotNull('governorate')->where('governorate', '!=', '')
+                ->groupBy('governorate')->orderByDesc('c')->limit(8)->pluck('c', 'k');
+            $chartGov = ['labels' => array_values($rows->keys()->all()), 'data' => array_map('intval', array_values($rows->all()))];
+        }
+        if (\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'readiness_level')) {
+            $rows = $modelClass::selectRaw('readiness_level as k, count(*) as c')
+                ->whereNotNull('readiness_level')->where('readiness_level', '!=', '')
+                ->groupBy('readiness_level')->orderByDesc('c')->limit(8)->pluck('c', 'k');
+            $chartReadiness = ['labels' => array_values($rows->keys()->all()), 'data' => array_map('intval', array_values($rows->all()))];
+        }
+    } catch (\Throwable $e) {}
+
+    return view('admin.excel-modules.table', [
+        'moduleCode' => $moduleCode,
+        'config'     => $config,
+        'records'    => $records,
+        'columns'    => $columns,
+        'batches'    => $batches,
+        'unitNames'  => $unitNames,
+        'chartStatus'=> $chartStatus,
+        'chartGov'   => $chartGov,
+        'chartReadiness' => $chartReadiness,
+        'totalCount' => $totalCount,
+    ]);
+}
+
+    /**
+     * تفاصيل صف واحد من جدول مخصص
+     */
+    public function showTableRecord(string $moduleCode, int $id)
+    {
+        $config = config('excel_modules.' . $moduleCode);
+        if (!$config) {
+            abort(404);
+        }
+        $modelClass = $config['model'];
+        $record = $modelClass::findOrFail($id);
+        $columns = array_values(array_unique(array_values($config['columns'])));
+
+        return view('admin.excel-modules.table-record', [
+            'moduleCode' => $moduleCode,
+            'config'     => $config,
+            'record'     => $record,
+            'columns'    => $columns,
+        ]);
+    }
+
     public function create()
     {
         return view('admin.excel-modules.create');
@@ -170,8 +308,8 @@ class ExcelModuleController extends Controller
         session()->forget(['excel_preview', 'excel_stored_path', 'excel_original_name']);
 
         return redirect()
-            ->route('admin.excel-modules.show', $batch->excel_module_id)
-            ->with('success', "تم استيراد {$batch->imported_rows} صف بنجاح.");
+            ->route('admin.excel-modules.table', $batch->module_code)
+            ->with('success', "تم استيراد {$batch->imported_rows} صف إلى جدول {$batch->module_code} بنجاح.");
     }
 
     /**

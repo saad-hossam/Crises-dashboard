@@ -89,15 +89,7 @@
 
 
         {{-- Notifications --}}
-        <button
-            type="button"
-            class="btn btn-icon navbar-action notifications-button"
-            disabled
-            aria-label="{{ __('common.no_notifications') }}"
-            title="{{ __('common.no_notifications') }}"
-        >
-            <i class="bi bi-bell"></i>
-        </button>
+     
 
 
         {{-- User Dropdown --}}
