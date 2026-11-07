@@ -6,15 +6,17 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\ProductionLineController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PermissionController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\ProductionLineController;
-use App\Http\Controllers\Admin\ProductionLinePreviewController;
+use App\Http\Controllers\Admin\ExcelModuleController;
+use App\Http\Controllers\Admin\ImportBatchController;
+use App\Http\Controllers\Admin\GlobalSearchController;
 use App\Http\Controllers\Admin\ProductionLineExcelController;
 use App\Http\Controllers\Admin\ProductionLineImportController;
-use App\Http\Controllers\Admin\ImportBatchController;
-use App\Http\Controllers\Admin\ExcelModuleController;
+use App\Http\Controllers\Admin\ProductionLinePreviewController;
 
 Route::get('/language/{locale}', [LanguageController::class, 'switch'])
     ->name('language.switch');
@@ -36,6 +38,13 @@ Route::middleware('auth')->group(function () {
         Route::resource('roles', RoleController::class);
         Route::resource('permissions', PermissionController::class);
         Route::resource('units', UnitController::class);
+
+        Route::get('/search', GlobalSearchController::class)->name('search');
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::put('/settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile');
+        Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password');
+        Route::put('/settings/preferences', [SettingsController::class, 'updatePreferences'])->name('settings.preferences');
+
 
         // Production Lines (legacy)
         Route::get('/production-lines', [ProductionLineController::class, 'index'])

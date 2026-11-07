@@ -52,67 +52,166 @@
         color: var(--bs-secondary-color);
         font-size: .85rem;
     }
+
+    .ao-table-scroll {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;
+    }
+    .ao-data-table {
+        min-width: 640px;
+        margin: 0;
+        font-size: 13px;
+    }
+    .ao-data-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: var(--aoi-surface, #fff);
+        border-bottom: 1px solid var(--aoi-border, #e2e8f0);
+        font-size: 11.5px;
+        font-weight: 700;
+        color: var(--aoi-muted, #64748b);
+        text-transform: none;
+        white-space: nowrap;
+        padding: .75rem .85rem;
+    }
+    .ao-data-table td {
+        padding: .7rem .85rem;
+        border-bottom: 1px solid var(--aoi-border, #e2e8f0);
+        vertical-align: middle;
+    }
+    .ao-col-sticky {
+        position: sticky;
+        inset-inline-start: 0;
+        z-index: 1;
+        background: var(--aoi-surface, #fff);
+        box-shadow: 4px 0 8px rgba(15,23,42,.04);
+    }
+    thead .ao-col-sticky { z-index: 3; }
+    .ao-col-id { width: 64px; min-width: 64px; }
+    .ao-col-actions { width: 88px; min-width: 88px; }
+    .ao-cell {
+        display: inline-block;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: bottom;
+    }
+    .ao-row-clickable { cursor: pointer; }
+    .ao-row-clickable:hover { background: rgba(var(--aoi-primary-rgb, 29,78,216), .05); }
+
+    /* hide extra columns on medium screens */
+    @media (max-width: 1199.98px) {
+        .ao-col-xl-only { display: none !important; }
+    }
+    @media (max-width: 991.98px) {
+        .ao-col-lg-only { display: none !important; }
+        .ao-data-table { min-width: 520px; }
+        .ao-cell { max-width: 120px; }
+    }
+
+    /* Mobile card list */
+    .ao-mobile-list { padding: .5rem; }
+    .ao-mobile-item {
+        display: block;
+        background: var(--aoi-surface, #fff);
+        border: 1px solid var(--aoi-border, #e2e8f0);
+        border-radius: .9rem;
+        padding: .85rem 1rem;
+        margin-bottom: .6rem;
+        color: inherit;
+        box-shadow: 0 4px 12px rgba(15,23,42,.04);
+    }
+    .ao-mobile-item:active { transform: scale(.99); }
+    .ao-mobile-item-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: .55rem;
+    }
+    .ao-mobile-id {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--aoi-primary, #1d4ed8);
+        background: rgba(var(--aoi-primary-rgb, 29,78,216), .1);
+        padding: .15rem .45rem;
+        border-radius: 6px;
+    }
+    .ao-mobile-fields { display: grid; gap: .35rem; }
+    .ao-mobile-field {
+        display: grid;
+        grid-template-columns: 38% 1fr;
+        gap: .5rem;
+        font-size: 12.5px;
+    }
+    .ao-mobile-label {
+        color: var(--aoi-muted, #64748b);
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ao-mobile-value {
+        color: var(--aoi-text, #0f172a);
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: end;
+    }
+    .ao-table-footer {
+        background: var(--aoi-surface, #fff) !important;
+        border-top: 1px solid var(--aoi-border, #e2e8f0);
+    }
+    .ao-pagination .pagination { margin: 0; flex-wrap: wrap; justify-content: center; }
+    .ao-pagination .page-link {
+        font-size: 13px;
+        padding: .35rem .65rem;
+        color: var(--aoi-primary, #1d4ed8);
+    }
+    .ao-pagination .page-item.active .page-link {
+        background: var(--aoi-primary, #1d4ed8);
+        border-color: var(--aoi-primary, #1d4ed8);
+    }
+
+    @media (max-width: 575.98px) {
+        .jm-filter-card .row > [class*="col-"] { margin-bottom: .15rem; }
+        .jm-filter-card .btn { width: 100%; }
+        .ao-mobile-field { grid-template-columns: 1fr; }
+        .ao-mobile-value { text-align: start; }
+    }
+
 </style>
 @endpush
 
 @section('content')
 
-{{-- Module analytics --}}
-<div class="row g-3 mb-3">
-    <div class="col-6 col-md-3">
-        <div class="kpi-card h-100">
-            <div class="kpi-label"><i class="bi bi-database me-1"></i>Records</div>
-            <div class="kpi-value">{{ number_format($totalCount ?? $records->total()) }}</div>
+
+{{-- 3 charts per module --}}
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="panel-card h-100">
+            <div class="panel-head"><i class="bi bi-pie-chart-fill text-primary me-1"></i> حالة التشغيل</div>
+            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modStatusChart"></canvas></div></div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="kpi-card h-100">
-            <div class="kpi-label"><i class="bi bi-funnel me-1"></i>Filtered</div>
-            <div class="kpi-value">{{ number_format($records->total()) }}</div>
+    <div class="col-12 col-md-4">
+        <div class="panel-card h-100">
+            <div class="panel-head"><i class="bi bi-geo-alt-fill text-primary me-1"></i> المحافظات</div>
+            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modGovChart"></canvas></div></div>
         </div>
     </div>
-    <div class="col-6 col-md-3">
-        <div class="kpi-card h-100">
-            <div class="kpi-label"><i class="bi bi-columns me-1"></i>Columns</div>
-            <div class="kpi-value">{{ count($columns) }}</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="kpi-card h-100">
-            <div class="kpi-label"><i class="bi bi-clock-history me-1"></i>Batches</div>
-            <div class="kpi-value">{{ ($batches ?? collect())->count() }}</div>
+    <div class="col-12 col-md-4">
+        <div class="panel-card h-100">
+            <div class="panel-head"><i class="bi bi-shield-check text-primary me-1"></i> الجاهزية</div>
+            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modReadyChart"></canvas></div></div>
         </div>
     </div>
 </div>
 
-@if(array_sum($chartStatus['data'] ?? []) > 0 || array_sum($chartGov['data'] ?? []) > 0 || array_sum($chartReadiness['data'] ?? []) > 0)
-<div class="row g-3 mb-4">
-    @if(array_sum($chartStatus['data'] ?? []) > 0)
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-pie-chart-fill text-success me-1"></i> حالة التشغيل</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modStatusChart"></canvas></div></div>
-        </div>
-    </div>
-    @endif
-    @if(array_sum($chartGov['data'] ?? []) > 0)
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-geo-alt-fill text-danger me-1"></i> المحافظات</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modGovChart"></canvas></div></div>
-        </div>
-    </div>
-    @endif
-    @if(array_sum($chartReadiness['data'] ?? []) > 0)
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-shield-check text-warning me-1"></i> الجاهزية</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modReadyChart"></canvas></div></div>
-        </div>
-    </div>
-    @endif
-</div>
-@endif
 
 
 {{-- Header --}}
@@ -210,65 +309,92 @@
     </div>
 </div>
 
-{{-- Table --}}
-<div class="card border-0 shadow-sm jm-table-card">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th class="ps-3 text-muted small" style="width:70px">#</th>
-                    @foreach(array_slice($columns, 0, 8) as $col)
-                        <th class="text-nowrap small text-uppercase text-muted">
-                            {{ str_replace('_', ' ', $col) }}
-                        </th>
-                    @endforeach
-                    <th class="text-center pe-3" style="width:90px">تفاصيل</th>
-                </tr>
-            </thead>
-            <tbody>
-            @forelse($records as $record)
-                @php
-                    $recordUrl = route('admin.excel-modules.table.record', [$moduleCode, $record->id]);
-                @endphp
-                <tr style="cursor:pointer" onclick="window.location='{{ $recordUrl }}'">
-                    <td class="ps-3 text-muted small">{{ $record->id }}</td>
-                    @foreach(array_slice($columns, 0, 8) as $col)
-                        @php $value = (string) ($record->{$col} ?? '—'); @endphp
-                        <td class="small" style="max-width:180px">
-                            <span class="d-inline-block text-truncate"
-                                  style="max-width:180px"
-                                  title="{{ $value }}">
-                                {{ \Illuminate\Support\Str::limit($value, 40) }}
-                            </span>
+{{-- Table (responsive) --}}
+@php
+    $visibleCols = array_values(array_slice($columns, 0, 8));
+@endphp
+
+<div class="card border-0 shadow-sm jm-table-card ao-data-card">
+    {{-- Desktop / tablet table --}}
+    <div class="ao-table-wrap d-none d-md-block">
+        <div class="table-responsive ao-table-scroll">
+            <table class="table table-hover align-middle mb-0 ao-data-table">
+                <thead>
+                    <tr>
+                        <th class="ao-col-sticky ao-col-id">#</th>
+                        @foreach($visibleCols as $i => $col)
+                            <th class="ao-col {{ $i >= 3 ? 'ao-col-lg-only' : '' }} {{ $i >= 5 ? 'ao-col-xl-only' : '' }}">
+                                {{ str_replace('_', ' ', $col) }}
+                            </th>
+                        @endforeach
+                        <th class="ao-col-actions text-center">تفاصيل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($records as $record)
+                    @php $recordUrl = route('admin.excel-modules.table.record', [$moduleCode, $record->id]); @endphp
+                    <tr class="ao-row-clickable" onclick="window.location='{{ $recordUrl }}'">
+                        <td class="ao-col-sticky ao-col-id text-muted">{{ $record->id }}</td>
+                        @foreach($visibleCols as $i => $col)
+                            @php $value = (string) ($record->{$col} ?? '—'); @endphp
+                            <td class="ao-col {{ $i >= 3 ? 'ao-col-lg-only' : '' }} {{ $i >= 5 ? 'ao-col-xl-only' : '' }}">
+                                <span class="ao-cell" title="{{ $value }}">{{ \Illuminate\Support\Str::limit($value, 36) }}</span>
+                            </td>
+                        @endforeach
+                        <td class="ao-col-actions text-center" onclick="event.stopPropagation()">
+                            <a class="btn btn-sm btn-outline-primary ao-eye-btn" href="{{ $recordUrl }}" title="عرض">
+                                <i class="bi bi-eye"></i>
+                            </a>
                         </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="{{ count($visibleCols) + 2 }}" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                            لا توجد بيانات.
+                            <a href="{{ route('admin.excel-modules.create') }}">استورد ملفاً</a>
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {{-- Mobile cards --}}
+    <div class="ao-mobile-list d-md-none">
+        @forelse($records as $record)
+            @php $recordUrl = route('admin.excel-modules.table.record', [$moduleCode, $record->id]); @endphp
+            <a href="{{ $recordUrl }}" class="ao-mobile-item text-decoration-none">
+                <div class="ao-mobile-item-top">
+                    <span class="ao-mobile-id">#{{ $record->id }}</span>
+                    <i class="bi bi-chevron-{{ app()->getLocale()==='ar' ? 'left' : 'right' }} text-muted"></i>
+                </div>
+                <div class="ao-mobile-fields">
+                    @foreach(array_slice($visibleCols, 0, 4) as $col)
+                        @php $value = (string) ($record->{$col} ?? '—'); @endphp
+                        <div class="ao-mobile-field">
+                            <span class="ao-mobile-label">{{ str_replace('_', ' ', $col) }}</span>
+                            <span class="ao-mobile-value">{{ \Illuminate\Support\Str::limit($value, 48) }}</span>
+                        </div>
                     @endforeach
-                    <td class="text-center pe-3" onclick="event.stopPropagation()">
-                        <a class="btn btn-sm btn-outline-primary"
-                           href="{{ $recordUrl }}" title="عرض">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="{{ min(8, count($columns)) + 2 }}" class="text-center text-muted py-5">
-                        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                        لا توجد بيانات.
-                        <a href="{{ route('admin.excel-modules.create') }}" class="ms-1">استورد ملفاً</a>
-                    </td>
-                </tr>
-            @endforelse
-            </tbody>
-        </table>
+                </div>
+            </a>
+        @empty
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+                لا توجد بيانات.
+            </div>
+        @endforelse
     </div>
 
     @if($records->total() > 0)
-        <div class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="card-footer ao-table-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div class="small text-muted">
                 عرض {{ $records->firstItem() }}–{{ $records->lastItem() }}
                 من {{ number_format($records->total()) }}
             </div>
-            <div>
+            <div class="ao-pagination">
                 {{ $records->links() }}
             </div>
         </div>
@@ -380,5 +506,66 @@
         }
     });
 })();
+</script>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (typeof Chart === 'undefined') { console.error('Chart.js missing'); return; }
+  const css = getComputedStyle(document.documentElement);
+  const p1 = (css.getPropertyValue('--aoi-primary')||'#2563eb').trim();
+  const p2 = (css.getPropertyValue('--aoi-primary-2')||'#3b82f6').trim();
+  const p3 = (css.getPropertyValue('--aoi-accent')||'#60a5fa').trim();
+  const palette = [p1,p2,p3,'#10b981','#f59e0b','#ef4444','#8b5cf6','#64748b'];
+  const isRtl = document.documentElement.dir === 'rtl';
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#64748b';
+
+  function draw(id, type, labels, data) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const labs = labels || [];
+    const vals = data || [];
+    if (!labs.length || !vals.length) {
+      const box = el.parentElement;
+      if (box) box.innerHTML = '<div class="empty-chart">لا توجد بيانات كافية</div>';
+      return;
+    }
+    const isDonut = type === 'doughnut' || type === 'pie';
+    new Chart(el, {
+      type: type,
+      data: {
+        labels: labs,
+        datasets: [{
+          data: vals,
+          backgroundColor: palette.slice(0, Math.max(labs.length, 1)),
+          borderWidth: 0,
+          borderRadius: type === 'bar' ? 6 : 0,
+          cutout: type === 'doughnut' ? '58%' : undefined
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: isDonut, position: 'bottom', rtl: isRtl, labels: { boxWidth: 10, font: { size: 10 } } },
+          tooltip: { rtl: isRtl }
+        },
+        scales: isDonut ? {} : {
+          x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 35 } },
+          y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } }, grid: { color: 'rgba(15,23,42,.06)' } }
+        }
+      }
+    });
+  }
+
+  draw('modStatusChart', 'doughnut', @json($chartStatus['labels'] ?? []), @json($chartStatus['data'] ?? []));
+  draw('modGovChart', 'bar', @json($chartGov['labels'] ?? []), @json($chartGov['data'] ?? []));
+  draw('modReadyChart', 'doughnut', @json($chartReadiness['labels'] ?? []), @json($chartReadiness['data'] ?? []));
+  
+});
 </script>
 @endpush

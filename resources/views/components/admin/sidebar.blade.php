@@ -106,7 +106,7 @@
                 @can('settings.manage')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}"
-                           href="{{ route('admin.dashboard') }}"
+                           href="{{ route('admin.settings.index') }}"
                            data-tooltip="{{ __('navigation.settings') }}">
                             <i class="bi bi-gear"></i>
                             <span>{{ __('navigation.settings') }}</span>

@@ -147,28 +147,41 @@ public function index()
         ->pluck('unit_name');
 
     // Charts للموديول
+    // 4 Charts
     $chartStatus = ['labels' => [], 'data' => []];
     $chartGov = ['labels' => [], 'data' => []];
     $chartReadiness = ['labels' => [], 'data' => []];
+    $chartUnits = ['labels' => [], 'data' => []];
     $totalCount = $modelClass::count();
+    $withCoords = 0;
+    $uniqueUnits = 0;
     try {
-        if (\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'operating_status')) {
-            $rows = $modelClass::selectRaw('operating_status as k, count(*) as c')
-                ->whereNotNull('operating_status')->where('operating_status', '!=', '')
-                ->groupBy('operating_status')->orderByDesc('c')->limit(8)->pluck('c', 'k');
-            $chartStatus = ['labels' => array_values($rows->keys()->all()), 'data' => array_map('intval', array_values($rows->all()))];
+        $tableName = (new $modelClass)->getTable();
+        $group = function (string $col) use ($modelClass) {
+            if (!\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), $col)) {
+                return ['labels' => [], 'data' => []];
+            }
+            $rows = $modelClass::selectRaw($col.' as k, count(*) as c')
+                ->whereNotNull($col)->where($col, '!=', '')
+                ->groupBy($col)->orderByDesc('c')->limit(8)->pluck('c', 'k');
+            return [
+                'labels' => array_map('strval', array_values($rows->keys()->all())),
+                'data' => array_map('intval', array_values($rows->all())),
+            ];
+        };
+        $chartStatus = $group('operating_status');
+        $chartGov = $group('governorate');
+        $chartReadiness = $group('readiness_level');
+        $unitCol = null;
+        foreach (['unit_name', 'owner_organization', 'company_name'] as $c) {
+            if (\Illuminate\Support\Facades\Schema::hasColumn($tableName, $c)) { $unitCol = $c; break; }
         }
-        if (\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'governorate')) {
-            $rows = $modelClass::selectRaw('governorate as k, count(*) as c')
-                ->whereNotNull('governorate')->where('governorate', '!=', '')
-                ->groupBy('governorate')->orderByDesc('c')->limit(8)->pluck('c', 'k');
-            $chartGov = ['labels' => array_values($rows->keys()->all()), 'data' => array_map('intval', array_values($rows->all()))];
+        if ($unitCol) {
+            $chartUnits = $group($unitCol);
+            $uniqueUnits = (int) $modelClass::whereNotNull($unitCol)->where($unitCol, '!=', '')->distinct()->count($unitCol);
         }
-        if (\Illuminate\Support\Facades\Schema::hasColumn((new $modelClass)->getTable(), 'readiness_level')) {
-            $rows = $modelClass::selectRaw('readiness_level as k, count(*) as c')
-                ->whereNotNull('readiness_level')->where('readiness_level', '!=', '')
-                ->groupBy('readiness_level')->orderByDesc('c')->limit(8)->pluck('c', 'k');
-            $chartReadiness = ['labels' => array_values($rows->keys()->all()), 'data' => array_map('intval', array_values($rows->all()))];
+        if (\Illuminate\Support\Facades\Schema::hasColumn($tableName, 'x_coordinate')) {
+            $withCoords = $modelClass::whereNotNull('x_coordinate')->whereNotNull('y_coordinate')->count();
         }
     } catch (\Throwable $e) {}
 
@@ -182,7 +195,10 @@ public function index()
         'chartStatus'=> $chartStatus,
         'chartGov'   => $chartGov,
         'chartReadiness' => $chartReadiness,
+        'chartUnits' => $chartUnits,
         'totalCount' => $totalCount,
+        'withCoords' => $withCoords,
+        'uniqueUnits'=> $uniqueUnits,
     ]);
 }
 

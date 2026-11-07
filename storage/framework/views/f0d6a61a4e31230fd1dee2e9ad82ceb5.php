@@ -106,7 +106,7 @@
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('settings.manage')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?php echo e(request()->routeIs('admin.settings.*') ? 'active' : ''); ?>"
-                           href="<?php echo e(route('admin.dashboard')); ?>"
+                           href="<?php echo e(route('admin.settings.index')); ?>"
                            data-tooltip="<?php echo e(__('navigation.settings')); ?>">
                             <i class="bi bi-gear"></i>
                             <span><?php echo e(__('navigation.settings')); ?></span>
@@ -121,7 +121,7 @@
     </nav>
 </aside>
 
-<?php if (! $__env->hasRenderedOnce('13f6bafa-0fd6-40a2-a0ef-41866dc7c215')): $__env->markAsRenderedOnce('13f6bafa-0fd6-40a2-a0ef-41866dc7c215'); ?>
+<?php if (! $__env->hasRenderedOnce('c8e5af0d-51be-4d9d-ab25-34e742bfb56e')): $__env->markAsRenderedOnce('c8e5af0d-51be-4d9d-ab25-34e742bfb56e'); ?>
 <?php $__env->startSection('scripts'); ?>
 <script>
 (function () {
