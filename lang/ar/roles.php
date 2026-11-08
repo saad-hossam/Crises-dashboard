@@ -1,34 +1,51 @@
 <?php
 
 return [
-    'title' => 'الأدوار',
-    'create' => 'إضافة دور',
-    'edit' => 'تعديل الدور',
-    'show' => 'تفاصيل الدور',
-    'details' => 'تفاصيل الدور',
-    'name' => 'اسم الدور',
-    'name_placeholder' => 'مثال: مدير العمليات',
-    'name_locked' => 'لا يمكن تغيير اسم دور المدير الأعلى.',
-    'permissions' => 'الصلاحيات',
-    'permissions_hint' => 'حدد الصلاحيات التي يمتلكها هذا الدور.',
-    'permissions_count' => 'الصلاحيات',
-    'users_count' => 'المستخدمون',
-    'assigned_users' => 'المستخدمون المرتبطون بهذا الدور',
-    'no_users' => 'لا يوجد مستخدمون مرتبطون بهذا الدور.',
-    'no_permissions' => 'لا توجد صلاحيات مخصصة.',
-    'created_at' => 'تاريخ الإنشاء',
-    'protected' => 'محمي',
-    'protected_hint' => 'لا يمكن حذف دور المدير الأعلى.',
-    'has_users_hint' => 'أعد تعيين المستخدمين قبل حذف هذا الدور.',
-    'select_all' => 'تحديد الكل',
-    'deselect_all' => 'إلغاء التحديد',
-    'created' => 'تم إنشاء الدور بنجاح.',
-    'updated' => 'تم تحديث الدور بنجاح.',
-    'deleted' => 'تم حذف الدور بنجاح.',
-    'delete_confirm' => 'هل تريد حذف هذا الدور؟',
-    'description' => 'الوصف',
-'validation' => [
-    'name_required' => 'اسم الدور مطلوب.',
-    'name_unique'   => 'اسم الدور موجود بالفعل.',
-],
+    /*
+    |--------------------------------------------------------------------------
+    | Roles — Arabic
+    |--------------------------------------------------------------------------
+    */
+
+    // Titles
+    'roles'            => 'الأدوار',
+    'role'             => 'الدور',
+    'create'           => 'إضافة دور',
+    'edit'             => 'تعديل الدور',
+    'show'             => 'تفاصيل الدور',
+    'details'          => 'التفاصيل',
+    'permissions'      => 'الصلاحيات',
+'permissions_hint' => 'اختر الصلاحيات التي يمنحها هذا الدور.',
+'select_all'       => 'تحديد الكل',
+'deselect_all'     => 'إلغاء الكل',
+'name_locked'      => 'لا يمكن تغيير اسم دور محمي.',
+
+    // Fields
+    'name'             => 'اسم الدور',
+    'name_placeholder' => 'مثال: مدير النظام',
+    'name_locked'      => 'لا يمكن تغيير اسم دور محمي.',
+    'description'      => 'الوصف',
+    'description_placeholder' => 'وصف مختصر للدور (اختياري)',
+    'permissions'      => 'الصلاحيات',
+    'permissions_hint' => 'اختر الصلاحيات التي يمنحها هذا الدور.',
+    'permissions_count'=> 'عدد الصلاحيات',
+    'users_count'      => 'عدد المستخدمين',
+    'assigned_users'   => 'المستخدمون المرتبطون',
+    'created_at'       => 'تاريخ الإنشاء',
+
+    // States
+    'protected'        => 'محمي',
+    'no_permissions'   => 'لا توجد صلاحيات ممنوحة لهذا الدور.',
+    'no_users'         => 'لا يوجد مستخدمون مرتبطون بهذا الدور.',
+
+    // Actions
+    'select_all'       => 'تحديد الكل',
+    'deselect_all'     => 'إلغاء الكل',
+
+    // Messages
+    'created_successfully' => 'تم إنشاء الدور بنجاح.',
+    'updated_successfully' => 'تم تحديث الدور بنجاح.',
+    'deleted_successfully' => 'تم حذف الدور بنجاح.',
+    'cannot_delete_assigned_role'  => 'لا يمكن حذف دور مرتبط بمستخدمين.',
+    'cannot_delete_protected_role' => 'لا يمكن حذف دور محمي.',
 ];

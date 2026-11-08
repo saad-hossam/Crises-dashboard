@@ -1,0 +1,337 @@
+﻿
+@extends('layouts.app')
+
+@section('content')
+<div class="container-fluid py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Ø¥Ø¯Ø§Ø±Ø© Ø®Ø·ÙˆØ· Ø§Ù„Ø¥Ù†ØªØ§Ø¬</h3>
+            <p class="text-muted mb-0">Ø¹Ø±Ø¶ ÙˆÙ…ØªØ§Ø¨Ø¹Ø© Ø¨ÙŠØ§Ù†Ø§Øª Ø®Ø·ÙˆØ· Ø§Ù„Ø¥Ù†ØªØ§Ø¬</p>
+        </div>
+    </div>
+
+    {{-- Statistics --}}
+    <div class="row g-3 mb-4">
+
+        <div class="col-md-3">
+            <a href="{{ route('admin.production-lines.index') }}"
+               class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="text-muted">Ø¥Ø¬Ù…Ø§Ù„ÙŠ Ø®Ø·ÙˆØ· Ø§Ù„Ø¥Ù†ØªØ§Ø¬</div>
+                        <h3 class="fw-bold mt-2">{{ number_format($statistics['total']) }}</h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{{ route('admin.production-lines.index', ['line_status' => 'ÙŠØ¹Ù…Ù„']) }}"
+               class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="text-muted">Ø®Ø·ÙˆØ· ØªØ¹Ù…Ù„</div>
+                        <h3 class="fw-bold text-success mt-2">
+                            {{ number_format($statistics['working']) }}
+                        </h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{{ route('admin.production-lines.index', ['line_status' => 'Ù„Ø§ ÙŠØ¹Ù…Ù„']) }}"
+               class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="text-muted">Ø®Ø·ÙˆØ· Ù„Ø§ ØªØ¹Ù…Ù„</div>
+                        <h3 class="fw-bold text-danger mt-2">
+                            {{ number_format($statistics['stopped']) }}
+                        </h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{{ route('admin.production-lines.index', ['line_status' => 'ØªØ­Øª Ø§Ù„ØªØ·ÙˆÙŠØ±']) }}"
+               class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="text-muted">ØªØ­Øª Ø§Ù„ØªØ·ÙˆÙŠØ±</div>
+                        <h3 class="fw-bold text-warning mt-2">
+                            {{ number_format($statistics['under_development']) }}
+                        </h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3">
+            <a href="{{ route('admin.production-lines.index', ['deleted' => 1]) }}"
+               class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <div class="text-muted">Ù…Ø­Ø°ÙˆÙØ© Ù…Ø¤Ù‚ØªÙ‹Ø§</div>
+                        <h3 class="fw-bold text-secondary mt-2">
+                            {{ number_format($statistics['deleted']) }}
+                        </h3>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    {{-- Search and Filters --}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold">Ø§Ù„Ø¨Ø­Ø« ÙˆØ§Ù„ÙÙ„Ø§ØªØ±</h5>
+        </div>
+
+        <div class="card-body">
+
+            <form method="GET" action="{{ route('admin.production-lines.index') }}">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">Ø¨Ø­Ø« Ø´Ø§Ù…Ù„</label>
+                        <input type="text"
+                               name="search"
+                               class="form-control"
+                               value="{{ request('search') }}"
+                               placeholder="Ø§Ø¨Ø­Ø« ÙÙŠ Ø¨ÙŠØ§Ù†Ø§Øª Ø®Ø·ÙˆØ· Ø§Ù„Ø¥Ù†ØªØ§Ø¬...">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©</label>
+                        <select name="governorate" class="form-select">
+                            <option value="">ÙƒÙ„ Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø§Øª</option>
+                            @foreach($productionLines->pluck('governorate')->filter()->unique()->sort() as $governorate)
+                                <option value="{{ $governorate }}"
+                                    @selected(request('governorate') == $governorate)>
+                                    {{ $governorate }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ø§Ù„ÙˆØ­Ø¯Ø©</label>
+                        <select name="unit_id" class="form-select">
+                            <option value="">ÙƒÙ„ Ø§Ù„ÙˆØ­Ø¯Ø§Øª</option>
+                            @foreach(\App\Models\Unit::orderBy('name')->get() as $unit)
+                                <option value="{{ $unit->id }}"
+                                    @selected(request('unit_id') == $unit->id)>
+                                    {{ $unit->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ø­Ø§Ù„Ø© Ø§Ù„Ø®Ø·</label>
+                        <select name="line_status" class="form-select">
+                            <option value="">ÙƒÙ„ Ø§Ù„Ø­Ø§Ù„Ø§Øª</option>
+                            @foreach(['ÙŠØ¹Ù…Ù„', 'Ù„Ø§ ÙŠØ¹Ù…Ù„', 'ØªØ­Øª Ø§Ù„ØªØ·ÙˆÙŠØ±', 'ØªØ­Øª Ø§Ù„ØªØ¬Ù‡ÙŠØ² ÙˆØ§Ù„ØªØ´ØºÙŠÙ„ Ø§Ù„ØªØ¬Ø±ÙŠØ¨ÙŠ'] as $status)
+                                <option value="{{ $status }}"
+                                    @selected(request('line_status') == $status)>
+                                    {{ $status }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ø­Ø§Ù„Ø© Ø§Ù„ØªØ´ØºÙŠÙ„</label>
+                        <input type="text"
+                               name="operating_status"
+                               class="form-control"
+                               value="{{ request('operating_status') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ù…Ø³ØªÙˆÙ‰ Ø§Ù„Ø¬Ø§Ù‡Ø²ÙŠØ©</label>
+                        <input type="text"
+                               name="readiness_level"
+                               class="form-control"
+                               value="{{ request('readiness_level') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ù†ÙˆØ¹ Ø§Ù„ØªØ·ÙˆÙŠØ±</label>
+                        <input type="text"
+                               name="development_type"
+                               class="form-control"
+                               value="{{ request('development_type') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ø³Ù†Ø© Ø§Ù„ØªØ´ØºÙŠÙ„</label>
+                        <input type="text"
+                               name="operating_year"
+                               class="form-control"
+                               value="{{ request('operating_year') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ø§Ù„Ø¬Ù‡Ø© Ø§Ù„Ù…Ø§Ù„ÙƒØ©</label>
+                        <input type="text"
+                               name="owner_organization"
+                               class="form-control"
+                               value="{{ request('owner_organization') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ù†Ø·Ø§Ù‚ Ø§Ù„Ù…ÙˆÙ‚Ø¹</label>
+                        <input type="text"
+                               name="location_scope"
+                               class="form-control"
+                               value="{{ request('location_scope') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">ØªØ±ØªÙŠØ¨ Ø­Ø³Ø¨</label>
+                        <select name="sort_by" class="form-select">
+                            <option value="created_at" @selected(request('sort_by', 'created_at') == 'created_at')>
+                                ØªØ§Ø±ÙŠØ® Ø§Ù„Ø¥Ø¶Ø§ÙØ©
+                            </option>
+                            <option value="name" @selected(request('sort_by') == 'name')>
+                                Ø§Ø³Ù… Ø®Ø· Ø§Ù„Ø¥Ù†ØªØ§Ø¬
+                            </option>
+                            <option value="operating_year" @selected(request('sort_by') == 'operating_year')>
+                                Ø³Ù†Ø© Ø§Ù„ØªØ´ØºÙŠÙ„
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Ø§ØªØ¬Ø§Ù‡ Ø§Ù„ØªØ±ØªÙŠØ¨</label>
+                        <select name="sort_direction" class="form-select">
+                            <option value="desc" @selected(request('sort_direction', 'desc') == 'desc')>
+                                ØªÙ†Ø§Ø²Ù„ÙŠ
+                            </option>
+                            <option value="asc" @selected(request('sort_direction') == 'asc')>
+                                ØªØµØ§Ø¹Ø¯ÙŠ
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        Ø¨Ø­Ø« ÙˆØªØ·Ø¨ÙŠÙ‚ Ø§Ù„ÙÙ„Ø§ØªØ±
+                    </button>
+
+                    <a href="{{ route('admin.production-lines.index') }}"
+                       class="btn btn-light border">
+                        Ø¥Ø¹Ø§Ø¯Ø© Ø¶Ø¨Ø·
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    {{-- Production Lines Table --}}
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold">Ù‚Ø§Ø¦Ù…Ø© Ø®Ø·ÙˆØ· Ø§Ù„Ø¥Ù†ØªØ§Ø¬</h5>
+            <span class="text-muted">
+                {{ $productionLines->total() }} Ø³Ø¬Ù„
+            </span>
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Ø§Ø³Ù… Ø®Ø· Ø§Ù„Ø¥Ù†ØªØ§Ø¬</th>
+                            <th>Ø§Ù„Ù…Ù†ØªØ¬</th>
+                            <th>Ø§Ù„ÙˆØ­Ø¯Ø©</th>
+                            <th>Ø§Ù„Ù…Ø­Ø§ÙØ¸Ø©</th>
+                            <th>Ø³Ù†Ø© Ø§Ù„ØªØ´ØºÙŠÙ„</th>
+                            <th>Ø­Ø§Ù„Ø© Ø§Ù„Ø®Ø·</th>
+                            <th>Ø­Ø§Ù„Ø© Ø§Ù„ØªØ´ØºÙŠÙ„</th>
+                            <th>Ø§Ù„Ø¬Ø§Ù‡Ø²ÙŠØ©</th>
+                            <th>Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡Ø§Øª</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @forelse($productionLines as $line)
+
+                            <tr>
+                                <td>{{ $loop->iteration + $productionLines->firstItem() - 1 }}</td>
+
+                                <td>
+                                    <div class="fw-semibold">
+                                        {{ $line->name ?: 'Ø¨Ø¯ÙˆÙ† Ø§Ø³Ù…' }}
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ $line->manufacturer }}
+                                    </small>
+                                </td>
+
+                                <td>{{ $line->product_name ?: '-' }}</td>
+
+                                <td>{{ $line->unit?->name ?? '-' }}</td>
+
+                                <td>{{ $line->governorate ?: '-' }}</td>
+
+                                <td>{{ $line->operating_year ?: '-' }}</td>
+
+                                <td>{{ $line->line_status ?: '-' }}</td>
+
+                                <td>{{ $line->operating_status ?: '-' }}</td>
+
+                                <td>{{ $line->readiness_level ?: '-' }}</td>
+
+                                <td>
+                                    <a href="{{ route('admin.production-lines.show', $line) }}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Ø¹Ø±Ø¶
+                                    </a>
+                                </td>
+                            </tr>
+
+                        @empty
+
+                            <tr>
+                                <td colspan="10" class="text-center py-5 text-muted">
+                                    Ù„Ø§ ØªÙˆØ¬Ø¯ Ø®Ø·ÙˆØ· Ø¥Ù†ØªØ§Ø¬ Ù„Ø¹Ø±Ø¶Ù‡Ø§
+                                </td>
+                            </tr>
+
+                        @endforelse
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+        @if($productionLines->hasPages())
+            <div class="card-footer bg-white">
+                {{ $productionLines->links() }}
+            </div>
+        @endif
+
+    </div>
+
+</div>
+@endsection
+

@@ -56,7 +56,7 @@ class UserController extends Controller
             );
         }
 
-        $users = $query->paginate(15)->withQueryString();
+        $users = $query->paginate(16)->withQueryString();
 
         $roles = Role::all();
 

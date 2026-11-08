@@ -1,34 +1,51 @@
 <?php
 
 return [
-    'title' => 'Roles',
-    'create' => 'Create Role',
-    'edit' => 'Edit Role',
-    'show' => 'Role Details',
-    'details' => 'Role Details',
-    'name' => 'Role Name',
-    'name_placeholder' => 'e.g. Operations Manager',
-    'name_locked' => 'The Super Admin role name cannot be changed.',
-    'permissions' => 'Permissions',
-    'permissions_hint' => 'Check the permissions this role should have.',
-    'permissions_count' => 'Permissions',
-    'users_count' => 'Users',
-    'assigned_users' => 'Users assigned to this role',
-    'no_users' => 'No users assigned to this role.',
-    'no_permissions' => 'No permissions assigned.',
-    'created_at' => 'Created',
-    'protected' => 'Protected',
-    'protected_hint' => 'The Super Admin role cannot be deleted.',
-    'has_users_hint' => 'Reassign all users before deleting this role.',
-    'select_all' => 'Select all',
-    'deselect_all' => 'Deselect all',
-    'created' => 'Role created successfully.',
-    'updated' => 'Role updated successfully.',
-    'deleted' => 'Role deleted successfully.',
-    'delete_confirm' => 'Delete this role?',
-    'description' => 'Description',
-'validation' => [
-    'name_required' => 'Role name is required.',
-    'name_unique'   => 'This role name already exists.',
-],
+    /*
+    |--------------------------------------------------------------------------
+    | Roles — English
+    |--------------------------------------------------------------------------
+    */
+
+    // Titles
+    'roles'            => 'Roles',
+    'role'             => 'Role',
+    'create'           => 'Create Role',
+    'edit'             => 'Edit Role',
+    'show'             => 'Role Details',
+    'details'          => 'Details',
+
+    // Fields
+    'name'             => 'Role Name',
+    'name_placeholder' => 'e.g. System Administrator',
+    'name_locked'      => 'The name of a protected role cannot be changed.',
+    'description'      => 'Description',
+    'description_placeholder' => 'A short description of the role (optional)',
+    'permissions'      => 'Permissions',
+    'permissions_hint' => 'Select the permissions granted by this role.',
+    'permissions_count'=> 'Permissions Count',
+    'users_count'      => 'Users Count',
+    'assigned_users'   => 'Assigned Users',
+    'created_at'       => 'Created At',
+
+    // States
+    'protected'        => 'Protected',
+    'no_permissions'   => 'No permissions granted to this role.',
+    'no_users'         => 'No users are assigned to this role.',
+
+    // Actions
+    'select_all'       => 'Select all',
+    'deselect_all'     => 'Deselect all',
+
+    // Messages
+    'created_successfully' => 'Role created successfully.',
+    'updated_successfully' => 'Role updated successfully.',
+    'deleted_successfully' => 'Role deleted successfully.',
+    'cannot_delete_assigned_role'  => 'Cannot delete a role assigned to users.',
+    'cannot_delete_protected_role' => 'Cannot delete a protected role.',
+    'permissions'      => 'Permissions',
+'permissions_hint' => 'Select the permissions granted by this role.',
+'select_all'       => 'Select all',
+'deselect_all'     => 'Deselect all',
+'name_locked'      => 'The name of a protected role cannot be changed.',
 ];

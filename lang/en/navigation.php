@@ -1,16 +1,14 @@
 <?php
-
 return [
     'dashboard' => 'Dashboard',
-    'excel_imports' => 'Excel Imports',
-    'data_management' => 'Data Management',
-    'reports' => 'Reports',
-    'users' => 'Users',
-    'roles_permissions' => 'Roles & Permissions',
-    'settings' => 'Settings',
+    'data_management' => 'Data management',
     'management' => 'Management',
-'system' => 'System',
-'permissions' => 'Permissions',
-'activity_logs' => 'Activity Logs',
-'units' => 'Units',
+    'users' => 'Users',
+    'roles' => 'Roles',
+    'permissions' => 'Permissions',
+    'units' => 'Units',
+    'system' => 'System',
+    'settings' => 'Settings',
+    'excel_data' => 'Excel data',
+    'production_lines' => 'Production lines',
 ];

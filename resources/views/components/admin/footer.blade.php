@@ -10,7 +10,6 @@
         <span class="footer-sep">·</span>
         <span class="footer-version">
             <span class="footer-pulse" aria-hidden="true"></span>
-            {{ __('common.version') }} 1.0.0
         </span>
     </div>
 </footer>
