@@ -6,17 +6,6 @@
 @section('content')
 <div class="card">
     <div class="card-body">
-
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0 small">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <form method="POST" action="{{ route('admin.roles.store') }}">
             @csrf
 
@@ -29,18 +18,7 @@
                 @error('name')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
 
-            <div class="mb-4">
-                <label for="description" class="form-label fw-semibold">{{ __('roles.description') }}</label>
-                <textarea name="description" id="description" rows="2"
-                          class="form-control @error('description') is-invalid @enderror"
-                          placeholder="{{ __('roles.description_placeholder') }}">{{ old('description') }}</textarea>
-                @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-
-            @include('admin.roles._permission-groups', [
-                'permissions' => $permissions,
-                'selectedPermissions' => old('permissions', []),
-            ])
+            @include('admin.roles._permission-groups', ['selectedPermissions' => old('permissions', [])])
 
             <div class="d-flex gap-2 mt-4">
                 <button type="submit" class="btn btn-primary">

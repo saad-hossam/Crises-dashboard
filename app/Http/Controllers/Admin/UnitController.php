@@ -2,27 +2,26 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Models\Unit;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreUnitRequest;
 use App\Http\Requests\UpdateUnitRequest;
+use App\Models\Unit;
+use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
     public function index(Request $request)
-{
-    $query = Unit::query();
+    {
+        $query = Unit::query();
 
-    if ($search = $request->input('search')) {
-        $query->where('name', 'like', "%{$search}%");
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $units = $query->latest('id')->paginate(20)->withQueryString();
+
+        return view('admin.units.index', compact('units'));
     }
-
-    // ترتيب تصاعدي حسب id (الأقدم أولاً)
-    $units = $query->orderBy('id')->paginate(20)->withQueryString();
-
-    return view('admin.units.index', compact('units'));
-}
 
     public function create()
     {

@@ -1,13 +1,13 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
+use App\Http\Controllers\Controller;
 
 use App\Models\Role;
 use App\Models\Permission;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\Controller;
+use Illuminate\Validation\Rule;
 
 class RoleController extends Controller
 {
@@ -28,10 +28,7 @@ class RoleController extends Controller
      */
     public function create()
     {
-        $permissions = Permission::orderBy('group')
-            ->orderBy('name')
-            ->get()
-            ->groupBy('group');
+        $permissions = Permission::orderBy('name')->get();
 
         return view('admin.roles.create', compact('permissions'));
     }
@@ -68,7 +65,7 @@ class RoleController extends Controller
             ]);
 
             $role->permissions()->sync(
-                $this->normalizePermissionIds($validated['permissions'] ?? [])
+                $validated['permissions'] ?? []
             );
         });
 
@@ -82,7 +79,7 @@ class RoleController extends Controller
      */
     public function show(Role $role)
     {
-        $role->load(['permissions', 'users']);
+        $role->load('permissions');
 
         return view('admin.roles.show', compact('role'));
     }
@@ -92,15 +89,13 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
-        $permissions = Permission::orderBy('group')
-            ->orderBy('name')
-            ->get()
-            ->groupBy('group');
+        $permissions = Permission::orderBy('name')->get();
 
         $role->load('permissions');
 
-        // IDs للصلاحيات المختارة
-        $selectedPermissions = $role->permissions->pluck('id')->toArray();
+        $selectedPermissions = $role->permissions
+            ->pluck('id')
+            ->toArray();
 
         return view('admin.roles.edit', compact(
             'role',
@@ -134,17 +129,14 @@ class RoleController extends Controller
         ]);
 
         DB::transaction(function () use ($validated, $role) {
-            // حماية الدور المحمي من تغيير الاسم أو الـ slug
-            $isProtected = (bool) $role->is_protected;
-
             $role->update([
-                'name' => $isProtected ? $role->name : $validated['name'],
-                'slug' => $isProtected ? $role->slug : $validated['slug'],
+                'name' => $validated['name'],
+                'slug' => $validated['slug'],
                 'description' => $validated['description'] ?? null,
             ]);
 
             $role->permissions()->sync(
-                $this->normalizePermissionIds($validated['permissions'] ?? [])
+                $validated['permissions'] ?? []
             );
         });
 
@@ -158,14 +150,6 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
-        // منع حذف الأدوار المحمية (Super Admin)
-        if ($role->is_protected) {
-            return back()->with(
-                'error',
-                __('roles.cannot_delete_protected_role') ?? 'Cannot delete a protected role.'
-            );
-        }
-
         // Prevent deleting a role assigned to users.
         if ($role->users()->exists()) {
             return back()->with(
@@ -182,18 +166,5 @@ class RoleController extends Controller
         return redirect()
             ->route('admin.roles.index')
             ->with('success', __('roles.deleted_successfully'));
-    }
-
-    /**
-     * تطبيع مصفوفة IDs الصلاحيات: int + إزالة القيم الفارغة والمكررة.
-     */
-    private function normalizePermissionIds(array $ids): array
-    {
-        return collect($ids)
-            ->filter(fn ($id) => $id !== null && $id !== '')
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
     }
 }

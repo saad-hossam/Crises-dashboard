@@ -189,6 +189,27 @@
 
 
 
+<?php if(!empty($moduleStats)): ?>
+<div class="row g-3 mb-4">
+    <?php $__currentLoopData = $moduleStats; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $stat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <div class="col-6 col-md-3">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-label"><?php echo e($stat['label']); ?></div>
+                        <div class="kpi-value"><?php echo e(number_format($stat['value'])); ?></div>
+                    </div>
+                    <div class="kpi-icon text-<?php echo e($stat['color'] ?? 'primary'); ?>">
+                        <i class="bi <?php echo e($stat['icon'] ?? 'bi-bar-chart'); ?>"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+</div>
+<?php endif; ?>
+
+
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-4">
         <div class="panel-card h-100">

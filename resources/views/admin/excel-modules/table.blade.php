@@ -190,6 +190,27 @@
 @section('content')
 
 
+{{-- Module statistics --}}
+@if(!empty($moduleStats))
+<div class="row g-3 mb-4">
+    @foreach($moduleStats as $stat)
+        <div class="col-6 col-md-3">
+            <div class="kpi-card h-100">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="kpi-label">{{ $stat['label'] }}</div>
+                        <div class="kpi-value">{{ number_format($stat['value']) }}</div>
+                    </div>
+                    <div class="kpi-icon text-{{ $stat['color'] ?? 'primary' }}">
+                        <i class="bi {{ $stat['icon'] ?? 'bi-bar-chart' }}"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+</div>
+@endif
+
 {{-- 3 charts per module --}}
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-4">

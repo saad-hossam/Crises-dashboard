@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ModuleImportBatch;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Schema;
@@ -19,6 +20,12 @@ class DashboardController extends Controller
         $activeModules = 0;
         $chartLabels = [];
         $chartCounts = [];
+        $govLabels = [];
+        $govCounts = [];
+        $statusLabels = [];
+        $statusCounts = [];
+        $readinessLabels = [];
+        $readinessCounts = [];
 
         $govMap = [];
         $statusMap = [];
@@ -41,100 +48,73 @@ class DashboardController extends Controller
                 $activeModules++;
             }
 
-            $statusBreakdown = ['labels' => [], 'data' => []];
-            $govBreakdown = ['labels' => [], 'data' => []];
-            $readinessBreakdown = ['labels' => [], 'data' => []];
-            $withCoords = 0;
-
-            try {
-                $table = (new $model)->getTable();
-
-                if ($count > 0 && Schema::hasColumn($table, 'operating_status')) {
-                    $rows = $model::query()
-                        ->selectRaw('operating_status as k, count(*) as c')
-                        ->whereNotNull('operating_status')
-                        ->where('operating_status', '!=', '')
-                        ->groupBy('operating_status')
-                        ->orderByDesc('c')
-                        ->limit(6)
-                        ->pluck('c', 'k');
-                    $statusBreakdown = [
-                        'labels' => array_values($rows->keys()->all()),
-                        'data'   => array_map('intval', array_values($rows->all())),
-                    ];
-                    foreach ($rows as $k => $c) {
-                        $statusMap[$k] = ($statusMap[$k] ?? 0) + (int) $c;
-                    }
-                }
-
-                if ($count > 0 && Schema::hasColumn($table, 'governorate')) {
-                    $rows = $model::query()
-                        ->selectRaw('governorate as k, count(*) as c')
-                        ->whereNotNull('governorate')
-                        ->where('governorate', '!=', '')
-                        ->groupBy('governorate')
-                        ->orderByDesc('c')
-                        ->limit(6)
-                        ->pluck('c', 'k');
-                    $govBreakdown = [
-                        'labels' => array_values($rows->keys()->all()),
-                        'data'   => array_map('intval', array_values($rows->all())),
-                    ];
-                    foreach ($rows as $k => $c) {
-                        $govMap[$k] = ($govMap[$k] ?? 0) + (int) $c;
-                    }
-                }
-
-                if ($count > 0 && Schema::hasColumn($table, 'readiness_level')) {
-                    $rows = $model::query()
-                        ->selectRaw('readiness_level as k, count(*) as c')
-                        ->whereNotNull('readiness_level')
-                        ->where('readiness_level', '!=', '')
-                        ->groupBy('readiness_level')
-                        ->orderByDesc('c')
-                        ->limit(6)
-                        ->pluck('c', 'k');
-                    $readinessBreakdown = [
-                        'labels' => array_values($rows->keys()->all()),
-                        'data'   => array_map('intval', array_values($rows->all())),
-                    ];
-                    foreach ($rows as $k => $c) {
-                        $readinessMap[$k] = ($readinessMap[$k] ?? 0) + (int) $c;
-                    }
-                }
-
-                if ($count > 0 && Schema::hasColumn($table, 'x_coordinate') && Schema::hasColumn($table, 'y_coordinate')) {
-                    $withCoords = $model::query()
-                        ->whereNotNull('x_coordinate')
-                        ->whereNotNull('y_coordinate')
-                        ->count();
-                }
-            } catch (\Throwable $e) {
-                // table may not exist yet
-            }
-
             $moduleStats[] = [
-                'code'       => $code,
-                'name'       => $cfg['name_ar'] ?? $code,
-                'table'      => $cfg['table'] ?? '',
-                'count'      => $count,
-                'icon'       => $this->moduleIcon($code),
-                'color'      => $this->moduleColor($code),
-                'status'     => $statusBreakdown,
-                'governorate'=> $govBreakdown,
-                'readiness'  => $readinessBreakdown,
-                'with_coords'=> $withCoords,
-                'coverage'   => $count > 0 ? round(($withCoords / max($count, 1)) * 100) : 0,
+                'code'   => $code,
+                'name'   => $cfg['name_ar'] ?? $code,
+                'table'  => $cfg['table'] ?? '',
+                'count'  => $count,
+                'icon'   => $this->moduleIcon($code),
+                'color'  => $this->moduleColor($code),
             ];
 
             $chartLabels[] = $cfg['name_ar'] ?? $code;
             $chartCounts[] = $count;
+
+            // تجميع للمحافظات / الحالة إن وُجدت أعمدة
+            try {
+                $table = (new $model)->getTable();
+                if ($count > 0 && Schema::hasColumn($table, 'governorate')) {
+                    $rows = $model::query()
+                        ->selectRaw('governorate, count(*) as c')
+                        ->whereNotNull('governorate')
+                        ->where('governorate', '!=', '')
+                        ->groupBy('governorate')
+                        ->orderByDesc('c')
+                        ->limit(10)
+                        ->pluck('c', 'governorate');
+                    foreach ($rows as $g => $c) {
+                        $govMap[$g] = ($govMap[$g] ?? 0) + (int) $c;
+                    }
+                }
+                if ($count > 0 && Schema::hasColumn($table, 'operating_status')) {
+                    $rows = $model::query()
+                        ->selectRaw('operating_status, count(*) as c')
+                        ->whereNotNull('operating_status')
+                        ->where('operating_status', '!=', '')
+                        ->groupBy('operating_status')
+                        ->pluck('c', 'operating_status');
+                    foreach ($rows as $s => $c) {
+                        $statusMap[$s] = ($statusMap[$s] ?? 0) + (int) $c;
+                    }
+                }
+                if ($count > 0 && Schema::hasColumn($table, 'readiness_level')) {
+                    $rows = $model::query()
+                        ->selectRaw('readiness_level, count(*) as c')
+                        ->whereNotNull('readiness_level')
+                        ->where('readiness_level', '!=', '')
+                        ->groupBy('readiness_level')
+                        ->pluck('c', 'readiness_level');
+                    foreach ($rows as $r => $c) {
+                        $readinessMap[$r] = ($readinessMap[$r] ?? 0) + (int) $c;
+                    }
+                }
+            } catch (\Throwable $e) {
+                // تجاهل جداول غير جاهزة
+            }
         }
 
         arsort($govMap);
         $govMap = array_slice($govMap, 0, 8, true);
+        $govLabels = array_keys($govMap);
+        $govCounts = array_values($govMap);
+
         arsort($statusMap);
+        $statusLabels = array_keys($statusMap);
+        $statusCounts = array_values($statusMap);
+
         arsort($readinessMap);
+        $readinessLabels = array_keys($readinessMap);
+        $readinessCounts = array_values($readinessMap);
 
         $stats = [
             [
@@ -163,24 +143,22 @@ class DashboardController extends Controller
             ],
         ];
 
-        $recentImports = class_exists(ModuleImportBatch::class)
-            ? ModuleImportBatch::latest()->limit(8)->get()
-            : collect();
+        $recentImports = ModuleImportBatch::latest()->limit(6)->get();
 
-        return view('admin.dashboard.index', [
-            'stats'            => $stats,
-            'moduleStats'      => $moduleStats,
-            'chartLabels'      => $chartLabels,
-            'chartCounts'      => $chartCounts,
-            'govLabels'        => array_keys($govMap),
-            'govCounts'        => array_values($govMap),
-            'statusLabels'     => array_keys($statusMap),
-            'statusCounts'     => array_values($statusMap),
-            'readinessLabels'  => array_keys($readinessMap),
-            'readinessCounts'  => array_values($readinessMap),
-            'recentImports'    => $recentImports,
-            'totalRecords'     => $totalRecords,
-        ]);
+        return view('admin.dashboard.index', compact(
+            'stats',
+            'moduleStats',
+            'chartLabels',
+            'chartCounts',
+            'govLabels',
+            'govCounts',
+            'statusLabels',
+            'statusCounts',
+            'readinessLabels',
+            'readinessCounts',
+            'recentImports',
+            'totalRecords'
+        ));
     }
 
     private function moduleIcon(string $code): string
@@ -202,7 +180,7 @@ class DashboardController extends Controller
     {
         return match ($code) {
             'PRODUCTION_LINES' => 'primary',
-            'COMPANY' => 'primary',
+            'COMPANY' => 'indigo',
             'SITES_COMPANIES' => 'success',
             'PRODUCTIVE_CAPACITIES' => 'warning',
             'WAREHOUSES' => 'info',

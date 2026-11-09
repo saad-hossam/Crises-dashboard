@@ -26,9 +26,30 @@
 
            
 
+            <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('data.view')): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->routeIs('admin.data.*') ? 'active' : ''); ?>"
+                       href="<?php echo e(route('admin.dashboard')); ?>"
+                       data-tooltip="<?php echo e(__('navigation.data_management')); ?>">
+                        <i class="bi bi-database"></i>
+                        <span><?php echo e(__('navigation.data_management')); ?></span>
+                    </a>
+                </li>
+            <?php endif; ?>
 
 
-         
+            
+            <li class="nav-item">
+                <a class="nav-link <?php echo e(request()->routeIs('admin.excel-modules.*') ? 'active' : ''); ?>"
+                   href="<?php echo e(route('admin.excel-modules.dashboard')); ?>"
+                   data-tooltip="<?php echo e(__('navigation.excel_data')); ?>">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    <span><?php echo e(__('navigation.excel_data')); ?></span>
+                    <?php if(request()->routeIs('admin.excel-modules.*')): ?>
+                        <span class="nav-active-dot" aria-hidden="true"></span>
+                    <?php endif; ?>
+                </a>
+            </li>
 
             
             <?php if(auth()->user()->can('users.view')
@@ -59,7 +80,7 @@
                            href="<?php echo e(route('admin.roles.index')); ?>"
                            data-tooltip="<?php echo e(__('navigation.roles_permissions')); ?>">
                             <i class="bi bi-shield-lock"></i>
-                            <span><?php echo e(__('navigation.roles')); ?></span>
+                            <span><?php echo e(__('navigation.roles_permissions')); ?></span>
                             <?php if(request()->routeIs('admin.roles.*')): ?>
                                 <span class="nav-active-dot" aria-hidden="true"></span>
                             <?php endif; ?>
@@ -106,7 +127,7 @@
                 <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('settings.manage')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?php echo e(request()->routeIs('admin.settings.*') ? 'active' : ''); ?>"
-                           href="<?php echo e(route('admin.settings.index')); ?>"
+                           href="<?php echo e(route('admin.dashboard')); ?>"
                            data-tooltip="<?php echo e(__('navigation.settings')); ?>">
                             <i class="bi bi-gear"></i>
                             <span><?php echo e(__('navigation.settings')); ?></span>
@@ -114,14 +135,23 @@
                     </li>
                 <?php endif; ?>
 
-               
+                <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('activity_logs.view')): ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo e(request()->routeIs('admin.activity-logs.*') ? 'active' : ''); ?>"
+                           href="<?php echo e(route('admin.dashboard')); ?>"
+                           data-tooltip="<?php echo e(__('navigation.activity_logs')); ?>">
+                            <i class="bi bi-clock-history"></i>
+                            <span><?php echo e(__('navigation.activity_logs')); ?></span>
+                        </a>
+                    </li>
+                <?php endif; ?>
             <?php endif; ?>
 
         </ul>
     </nav>
 </aside>
 
-<?php if (! $__env->hasRenderedOnce('3c4a04d2-1560-46c1-a43d-f978cd812406')): $__env->markAsRenderedOnce('3c4a04d2-1560-46c1-a43d-f978cd812406'); ?>
+<?php if (! $__env->hasRenderedOnce('dbc7d9ba-88a7-44ae-bd19-72ee05ec9b42')): $__env->markAsRenderedOnce('dbc7d9ba-88a7-44ae-bd19-72ee05ec9b42'); ?>
 <?php $__env->startSection('scripts'); ?>
 <script>
 (function () {
