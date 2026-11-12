@@ -15,15 +15,10 @@ return new class extends Migration
         // جعل unit_id اختياري + إضافة unit_code في production_lines
         if (Schema::hasTable('production_lines')) {
             try {
-                // فك الـ FK مؤقتاً إن وجد
                 Schema::table('production_lines', function (Blueprint $table) {
                     try { $table->dropForeign(['unit_id']); } catch (\Throwable $e) {}
                 });
             } catch (\Throwable $e) {}
-
-            Schema::table('production_lines', function (Blueprint $table) {
-                // nullable بدون doctrine change — نستخدم DB::statement
-            });
 
             \Illuminate\Support\Facades\DB::statement('ALTER TABLE production_lines MODIFY unit_id BIGINT UNSIGNED NULL');
 
@@ -42,12 +37,12 @@ return new class extends Migration
             $table->string('owner_organization')->nullable()->index();
             $table->string('location_scope')->nullable()->index();
             $table->string('governorate')->nullable()->index();
-            $table->string('company_name')->nullable();
+            $table->text('company_name')->nullable();            // ← text
             $table->text('address')->nullable();
             $table->string('operating_status')->nullable()->index();
             $table->string('readiness_level')->nullable()->index();
             $table->string('last_updated_date')->nullable();
-            $table->string('data_entry_responsible')->nullable();
+            $table->text('data_entry_responsible')->nullable();   // ← text
             $table->double('x_coordinate')->nullable();
             $table->double('y_coordinate')->nullable();
             $table->string('unit_name')->nullable();
@@ -65,13 +60,13 @@ return new class extends Migration
                 $table->string('abbreviation')->nullable();
                 $table->string('company_type')->nullable()->index();
                 $table->string('legal_form')->nullable();
-                $table->string('headquarters')->nullable();
-                $table->string('website')->nullable();
+                $table->text('headquarters')->nullable();            // ← text
+                $table->text('website')->nullable();                 // ← text
                 $table->string('phone')->nullable();
-                $table->string('board_chairman')->nullable();
-                $table->string('ceo')->nullable();
-                $table->string('founding_law')->nullable();
-                $table->string('affiliation')->nullable();
+                $table->text('board_chairman')->nullable();          // ← text
+                $table->text('ceo')->nullable();                     // ← text
+                $table->text('founding_law')->nullable();            // ← text
+                $table->text('affiliation')->nullable();             // ← text
                 $table->string('state_ownership_percent')->nullable();
                 $table->string('authorized_capital')->nullable();
                 $table->string('email')->nullable();
@@ -82,11 +77,11 @@ return new class extends Migration
                 $table->string('paid_capital')->nullable();
                 $table->text('main_activity')->nullable();
                 $table->text('sub_activities')->nullable();
-                $table->string('founded_at')->nullable();
-                $table->string('commercial_register')->nullable();
+                $table->text('founded_at')->nullable();
+                $table->text('commercial_register')->nullable();     // ← text
                 $table->string('tax_id')->nullable();
                 $table->text('foreign_branches')->nullable();
-                $table->string('stock_listing_status')->nullable();
+                $table->text('stock_listing_status')->nullable();    // ← text
             });
         }
 
@@ -95,14 +90,14 @@ return new class extends Migration
                 $common($table);
                 $table->string('site_name')->nullable()->index();
                 $table->string('site_type')->nullable()->index();
-                $table->string('owner_company')->nullable();
-                $table->string('operator_company')->nullable();
-                $table->string('area')->nullable();
+                $table->text('owner_company')->nullable();           // ← text
+                $table->text('operator_company')->nullable();        // ← text
+                $table->text('area')->nullable();                    // ← text
                 $table->string('area_unit')->nullable();
                 $table->string('employees_count')->nullable();
-                $table->string('daily_operating_hours')->nullable();
+                $table->text('daily_operating_hours')->nullable();   // ← text
                 $table->string('shifts_count')->nullable();
-                $table->string('site_manager')->nullable();
+                $table->text('site_manager')->nullable();            // ← text
                 $table->string('site_manager_phone')->nullable();
             });
         }
@@ -111,17 +106,17 @@ return new class extends Migration
             Schema::create('productive_capacities', function (Blueprint $table) use ($common) {
                 $common($table);
                 $table->string('product_name')->nullable()->index();
-                $table->string('unit_of_measure')->nullable();
-                $table->string('time_period')->nullable();
-                $table->string('design_capacity')->nullable();
-                $table->string('available_capacity')->nullable();
-                $table->string('actual_production')->nullable();
-                $table->string('required_labor')->nullable();
+                $table->text('unit_of_measure')->nullable();         // ← text
+                $table->text('time_period')->nullable();             // ← text
+                $table->text('design_capacity')->nullable();         // ← text
+                $table->text('available_capacity')->nullable();      // ← text
+                $table->text('actual_production')->nullable();       // ← text
+                $table->text('required_labor')->nullable();          // ← text
                 $table->text('required_raw_materials')->nullable();
-                $table->string('import_dependency_percent')->nullable();
-                $table->string('line_convertible')->nullable();
-                $table->string('alternative_product')->nullable();
-                $table->string('conversion_days')->nullable();
+                $table->text('import_dependency_percent')->nullable(); // ← text
+                $table->text('line_convertible')->nullable();        // ← text
+                $table->text('alternative_product')->nullable();     // ← text
+                $table->text('conversion_days')->nullable();         // ← text
             });
         }
 
@@ -130,14 +125,14 @@ return new class extends Migration
                 $common($table);
                 $table->string('warehouse_name')->nullable()->index();
                 $table->string('warehouse_type')->nullable()->index();
-                $table->string('area')->nullable();
-                $table->string('design_capacity')->nullable();
-                $table->string('used_capacity')->nullable();
-                $table->string('available_capacity')->nullable();
+                $table->text('area')->nullable();                    // ← text
+                $table->text('design_capacity')->nullable();         // ← text
+                $table->text('used_capacity')->nullable();           // ← text
+                $table->text('available_capacity')->nullable();      // ← text
                 $table->string('capacity_unit')->nullable();
-                $table->string('materials_type')->nullable();
-                $table->string('refrigeration')->nullable();
-                $table->string('civil_defense_status')->nullable();
+                $table->text('materials_type')->nullable();          // ← text
+                $table->text('refrigeration')->nullable();           // ← text
+                $table->text('civil_defense_status')->nullable();    // ← text
             });
         }
 
@@ -145,19 +140,19 @@ return new class extends Migration
             Schema::create('products_services', function (Blueprint $table) use ($common) {
                 $common($table);
                 $table->string('name')->nullable()->index();
-                $table->string('unit_of_measure')->nullable();
+                $table->text('unit_of_measure')->nullable();             // ← text
                 $table->text('usage')->nullable();
-                $table->string('annual_production')->nullable();
-                $table->string('monthly_production')->nullable();
-                $table->string('current_demand')->nullable();
-                $table->string('target_market')->nullable();
+                $table->text('annual_production')->nullable();           // ← text
+                $table->text('monthly_production')->nullable();          // ← text
+                $table->text('current_demand')->nullable();              // ← text
+                $table->text('target_market')->nullable();               // ← text
                 $table->text('gov_beneficiaries')->nullable();
                 $table->text('main_raw_materials')->nullable();
-                $table->string('local_content_percent')->nullable();
-                $table->string('can_increase_production')->nullable();
-                $table->string('alternative_product')->nullable();
-                $table->string('production_cycle')->nullable();
-                $table->string('storage_duration')->nullable();
+                $table->text('local_content_percent')->nullable();       // ← text (سبب الخطأ)
+                $table->text('can_increase_production')->nullable();     // ← text
+                $table->text('alternative_product')->nullable();         // ← text
+                $table->text('production_cycle')->nullable();            // ← text
+                $table->text('storage_duration')->nullable();            // ← text
                 $table->text('storage_conditions')->nullable();
             });
         }
@@ -169,17 +164,17 @@ return new class extends Migration
                 $table->string('facility_type')->nullable()->index();
                 $table->text('usage')->nullable();
                 $table->string('ownership_type')->nullable();
-                $table->string('total_area')->nullable();
-                $table->string('built_area')->nullable();
+                $table->text('total_area')->nullable();              // ← text
+                $table->text('built_area')->nullable();              // ← text
                 $table->string('buildings_count')->nullable();
                 $table->string('floors_count')->nullable();
-                $table->string('construction_year')->nullable();
-                $table->string('estimated_value')->nullable();
-                $table->string('structural_condition')->nullable();
-                $table->string('capacity')->nullable();
-                $table->string('electricity_source')->nullable();
-                $table->string('water_source')->nullable();
-                $table->string('insurance_status')->nullable();
+                $table->text('construction_year')->nullable();       // ← text
+                $table->text('estimated_value')->nullable();         // ← text
+                $table->text('structural_condition')->nullable();    // ← text
+                $table->text('capacity')->nullable();                // ← text
+                $table->text('electricity_source')->nullable();      // ← text
+                $table->text('water_source')->nullable();            // ← text
+                $table->text('insurance_status')->nullable();        // ← text
             });
         }
 
@@ -187,18 +182,17 @@ return new class extends Migration
             Schema::create('mutual_dependencies', function (Blueprint $table) use ($common) {
                 $common($table);
                 $table->string('dependence_type')->nullable()->index();
-                $table->string('counterpart')->nullable();
-                $table->string('dependence_degree')->nullable();
-                $table->string('has_alternative')->nullable();
+                $table->text('counterpart')->nullable();             // ← text
+                $table->text('dependence_degree')->nullable();       // ← text
+                $table->text('has_alternative')->nullable();         // ← text
                 $table->string('alternatives_count')->nullable();
-                $table->string('outage_tolerance_hours')->nullable();
-                $table->string('alternative_lead_hours')->nullable();
+                $table->text('outage_tolerance_hours')->nullable();  // ← text
+                $table->text('alternative_lead_hours')->nullable();  // ← text
                 $table->text('outage_impact')->nullable();
                 $table->text('mitigation_action')->nullable();
             });
         }
 
-        // تتبع الاستيراد لكل موديول
         if (!Schema::hasTable('module_import_batches')) {
             Schema::create('module_import_batches', function (Blueprint $table) {
                 $table->id();
@@ -209,7 +203,7 @@ return new class extends Migration
                 $table->unsignedInteger('total_rows')->default(0);
                 $table->unsignedInteger('imported_rows')->default(0);
                 $table->unsignedInteger('skipped_rows')->default(0);
-                $table->string('status')->default('completed'); // completed|failed
+                $table->string('status')->default('completed');
                 $table->text('error_message')->nullable();
                 $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
                 $table->boolean('replaced_existing')->default(false);

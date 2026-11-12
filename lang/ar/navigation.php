@@ -1,6 +1,8 @@
 <?php
 return [
     'dashboard' => 'لوحة التحكم',
+    'charts'=>'تحليل البيانات ',
+
     'data_management' => 'إدارة البيانات',
     'management' => 'الإدارة',
     'users' => 'المستخدمون',

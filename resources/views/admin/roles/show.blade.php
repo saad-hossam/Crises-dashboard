@@ -4,6 +4,21 @@
 @section('page_title', __('roles.show'))
 
 @section('content')
+@php
+    $groupLabels = [
+        'dashboard'     => __('permissions.groups.dashboard'),
+        'users'         => __('permissions.groups.users'),
+        'roles'         => __('permissions.groups.roles'),
+        'permissions'   => __('permissions.groups.permissions'),
+        'imports'       => __('permissions.groups.imports'),
+        'data'          => __('permissions.groups.data'),
+        'reports'       => __('permissions.groups.reports'),
+        'settings'      => __('permissions.groups.settings'),
+        'activity_logs' => __('permissions.groups.activity_logs'),
+        'units'         => __('permissions.groups.units') ?? 'Units',
+    ];
+@endphp
+
 <div class="row g-3">
     <div class="col-md-6">
         <div class="card">
@@ -11,7 +26,14 @@
                 <h5 class="card-title mb-3">{{ __('roles.details') }}</h5>
                 <dl class="row mb-0">
                     <dt class="col-sm-5">{{ __('roles.name') }}</dt>
-                    <dd class="col-sm-7"><strong>{{ $role->name }}</strong></dd>
+                    <dd class="col-sm-7">
+                        <strong>{{ $role->name }}</strong>
+                        @if ($role->is_protected)
+                            <span class="badge bg-warning-subtle text-warning-emphasis ms-2">
+                                <i class="bi bi-shield-fill"></i> {{ __('roles.protected') ?? 'Protected' }}
+                            </span>
+                        @endif
+                    </dd>
 
                     <dt class="col-sm-5">{{ __('roles.description') }}</dt>
                     <dd class="col-sm-7">{{ $role->description ?? '—' }}</dd>
@@ -23,7 +45,7 @@
                     <dd class="col-sm-7">{{ $role->permissions->count() }}</dd>
 
                     <dt class="col-sm-5">{{ __('roles.created_at') }}</dt>
-                    <dd class="col-sm-7">{{ $role->created_at->format('Y-m-d H:i') }}</dd>
+                    <dd class="col-sm-7">{{ $role->created_at?->format('Y-m-d H:i') ?? '—' }}</dd>
                 </dl>
             </div>
         </div>
@@ -39,7 +61,9 @@
                 @else
                     @foreach ($grouped as $group => $perms)
                         <div class="mb-2">
-                            <strong class="d-block small text-uppercase text-muted mb-1">{{ $group ?? '—' }}</strong>
+                            <strong class="d-block small text-uppercase text-muted mb-1">
+                                {{ $groupLabels[$group] ?? ucfirst($group ?: '—') }}
+                            </strong>
                             @foreach ($perms as $p)
                                 <span class="badge bg-primary-subtle text-primary-emphasis me-1 mb-1">
                                     {{ $p->name }}

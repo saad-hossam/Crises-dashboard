@@ -4,14 +4,17 @@
 ========================================================= */
 
 :root {
-    /* AOI Brand Colors */
-    --admin-primary: #17365D;
-    --admin-primary-dark: #102944;
-    --admin-primary-light: #EAF0F7;
 
-    --admin-accent: #E87524;
-    --admin-accent-dark: #CF5F15;
-    --admin-accent-light: #FFF1E7;
+    --admin-primary: #E87524;
+    --admin-primary-dark: #CF5F15;
+    --admin-primary-light: #FFF1E7;
+    /* AOI Brand Colors */
+    
+    
+
+    --admin-accent: #17365D;
+    --admin-accent-dark: #102944;
+    --admin-accent-light: #EAF0F7;
 
     /* Sidebar */
     --admin-sidebar: #172B45;
@@ -58,7 +61,7 @@ body.admin-body {
     background: var(--admin-bg);
     color: var(--admin-text);
     font-family: Inter, "Cairo", sans-serif;
-    font-size: 14px;
+    font-size: 18px;
     overflow-x: hidden;
 }
 
@@ -210,7 +213,7 @@ button {
     padding: 11px 13px;
 
     color: #b8c5d8;
-    font-size: 13px;
+    font-size: 18px;
     font-weight: 600;
 
     border-radius: 10px;
@@ -1130,4 +1133,304 @@ button {
     background-color: #1e293b;
     border-color: #475569;
     color: #f8fafc;
+}
+/* =========================================================
+   DASHBOARD PAGE — Hero, KPI, Panels, Module Cards
+   (appended — no separate file)
+========================================================= */
+
+/* Aliases used by dashboard JS */
+:root {
+    --aoi-primary:   var(--admin-primary);
+    --aoi-primary-2: #06b6d4;
+    --aoi-accent:    var(--admin-accent);
+    --aoi-muted:     var(--admin-muted);
+}
+
+/* ---------- Hero ---------- */
+.dash-hero {
+    position: relative;
+    padding: 28px 30px;
+    border-radius: 18px;
+    color: #fff;
+    background: linear-gradient(135deg, #E87524 0%, #CF5F15 55%, #17365D 100%);
+    overflow: hidden;
+    box-shadow: 0 14px 40px rgba(232, 117, 36, .25);
+}
+.dash-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.18), transparent 55%),
+        radial-gradient(circle at 10% 90%, rgba(255,255,255,.10), transparent 55%);
+    pointer-events: none;
+}
+.dash-hero > * { position: relative; z-index: 1; }
+.dash-hero-kicker {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    opacity: .9;
+}
+.dash-hero-title {
+    font-size: clamp(20px, 2.6vw, 28px);
+    font-weight: 800;
+    letter-spacing: -.3px;
+}
+.dash-hero-sub {
+    font-size: 13px;
+    opacity: .85;
+}
+.dash-hero .btn-light {
+    background: rgba(255,255,255,.92);
+    border-color: transparent;
+    color: var(--admin-accent);
+    font-weight: 700;
+}
+.dash-hero .btn-light:hover {
+    background: #fff;
+    transform: translateY(-2px);
+}
+
+/* ---------- KPI cards ---------- */
+.kpi-card {
+    position: relative;
+    padding: 20px 22px;
+    background: var(--admin-white);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    box-shadow: var(--admin-shadow);
+    transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 35px rgba(15, 23, 42, .09);
+    border-color: #cbdcff;
+}
+.kpi-label {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--admin-muted);
+    margin-bottom: 6px;
+}
+.kpi-value {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.8px;
+    color: var(--admin-text);
+    line-height: 1.1;
+}
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* ---------- Panels (charts & tables) ---------- */
+.panel-card {
+    background: var(--admin-white);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    box-shadow: var(--admin-shadow);
+    overflow: hidden;
+}
+.panel-head {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--admin-border);
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--admin-text);
+}
+.panel-body { padding: 20px; }
+
+.chart-box {
+    position: relative;
+    width: 100%;
+    height: 280px;
+}
+.chart-box-sm { height: 240px; }
+.empty-chart {
+    height: 240px;
+    display: grid;
+    place-items: center;
+    color: var(--admin-muted);
+    font-size: 13px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+.admin-wrapper.dark-mode .empty-chart { background: #0f172a; }
+
+/* ---------- Section title ---------- */
+.section-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--admin-text);
+    margin: 0;
+}
+
+/* ---------- Module cards ---------- */
+.module-card-v2 {
+    position: relative;
+    display: block;
+    padding: 18px;
+    background: var(--admin-white);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius);
+    box-shadow: var(--admin-shadow);
+    overflow: hidden;
+    transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.module-card-v2:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 35px rgba(15, 23, 42, .12);
+    border-color: #cbdcff;
+}
+.module-card-v2-glow {
+    position: absolute;
+    top: -50px;
+    inset-inline-end: -50px;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232, 117, 36, .18), transparent 70%);
+    pointer-events: none;
+}
+.module-card-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    font-size: 22px;
+    flex-shrink: 0;
+    background: var(--admin-primary-light);
+    color: var(--admin-primary);
+    transition: transform .3s ease;
+}
+.module-card-v2:hover .module-card-icon {
+    transform: scale(1.08) rotate(-6deg);
+}
+.module-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--admin-text);
+}
+.module-code-badge {
+    flex-shrink: 0;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--admin-accent-light);
+    color: var(--admin-accent);
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.module-meta {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--admin-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.module-meta code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    font-size: 11px;
+}
+
+/* Mini stats inside module card */
+.mini-stat {
+    padding: 10px 4px;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 10px;
+}
+.mini-stat-val {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--admin-text);
+    line-height: 1.1;
+}
+.mini-stat-lbl {
+    margin-top: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    color: var(--admin-muted);
+}
+
+.module-card-v2-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--admin-border);
+    color: var(--admin-primary);
+    font-size: 12px;
+    font-weight: 800;
+}
+.module-card-v2-cta i {
+    transition: transform .25s ease;
+}
+.module-card-v2:hover .module-card-v2-cta i {
+    transform: translateX(4px);
+}
+[dir="rtl"] .module-card-v2:hover .module-card-v2-cta i {
+    transform: translateX(-4px);
+}
+
+/* ---------- Dashboard table tweaks ---------- */
+.dash-table tbody td {
+    vertical-align: middle;
+}
+
+/* ---------- Dark mode overrides for dashboard ---------- */
+.admin-wrapper.dark-mode .kpi-card,
+.admin-wrapper.dark-mode .panel-card,
+.admin-wrapper.dark-mode .module-card-v2 {
+    background: #1e293b;
+    border-color: #334155;
+}
+.admin-wrapper.dark-mode .kpi-value,
+.admin-wrapper.dark-mode .module-title,
+.admin-wrapper.dark-mode .panel-head,
+.admin-wrapper.dark-mode .section-title {
+    color: #f1f5f9;
+}
+.admin-wrapper.dark-mode .mini-stat {
+    background: #0f172a;
+}
+.admin-wrapper.dark-mode .module-card-icon {
+    background: rgba(232, 117, 36, .18);
+    color: #ffa866;
+}
+.admin-wrapper.dark-mode .module-code-badge {
+    background: rgba(23, 54, 93, .6);
+    color: #93b4d8;
+}
+.admin-wrapper.dark-mode .dash-hero {
+    box-shadow: 0 14px 40px rgba(0, 0, 0, .5);
+}
+
+/* ---------- Dashboard responsive ---------- */
+@media (max-width: 575.98px) {
+    .dash-hero { padding: 20px; border-radius: 15px; }
+    .kpi-value { font-size: 24px; }
+    .kpi-icon  { width: 42px; height: 42px; font-size: 18px; }
+    .chart-box    { height: 220px; }
+    .chart-box-sm { height: 200px; }
 }

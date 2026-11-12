@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"
-      data-palette="{{ request()->cookie('aoi_palette', session('palette', 'softblue')) }}">
+      data-palette="{{ request()->cookie('aoi_palette', session('palette', 'navy')) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,8 +14,8 @@
                 || '{{ request()->cookie('aoi_theme', session('theme', 'light')) }}'
                 || 'light';
             var palette = localStorage.getItem('aoi-palette')
-                || '{{ request()->cookie('aoi_palette', session('palette', 'softblue')) }}'
-                || 'softblue';
+                || '{{ request()->cookie('aoi_palette', session('palette', 'navy')) }}'
+                || 'navy';
             document.documentElement.setAttribute('data-palette', palette);
             if (theme === 'dark') document.documentElement.classList.add('dark-boot');
             window.__AOI_THEME__ = theme;
@@ -60,12 +60,12 @@
                 <button type="button" class="ao-palette-close" id="aoPaletteClose" aria-label="Close">&times;</button>
             </div>
             <div class="ao-palette-title">Palette</div>
-                                    <div class="ao-palette-swatches">
-                <button type="button" class="ao-swatch" data-palette="softblue" style="--sw:#5b9bd5" title="Soft Blue"><span>Soft Blue</span></button>
-                <button type="button" class="ao-swatch" data-palette="sage" style="--sw:#7aa892" title="Sage"><span>Sage</span></button>
-                <button type="button" class="ao-swatch" data-palette="slate" style="--sw:#8494a8" title="Slate"><span>Slate</span></button>
-                <button type="button" class="ao-swatch" data-palette="sand" style="--sw:#c4a484" title="Sand"><span>Sand</span></button>
-                <button type="button" class="ao-swatch" data-palette="plum" style="--sw:#a294b5" title="Plum"><span>Plum</span></button>
+                                                <div class="ao-palette-swatches">
+                <button type="button" class="ao-swatch" data-palette="navy" style="--sw:#2c5282" title="Navy"><span>Navy</span></button>
+                <button type="button" class="ao-swatch" data-palette="graphite" style="--sw:#556274" title="Graphite"><span>Graphite</span></button>
+                <button type="button" class="ao-swatch" data-palette="forest" style="--sw:#3d7a6a" title="Forest"><span>Forest</span></button>
+                <button type="button" class="ao-swatch" data-palette="steel" style="--sw:#4a7594" title="Steel"><span>Steel</span></button>
+                <button type="button" class="ao-swatch" data-palette="wine" style="--sw:#854a5c" title="Wine"><span>Wine</span></button>
             </div>
             <div class="ao-palette-title">Appearance</div>
             <div class="ao-palette-modes">
@@ -102,7 +102,7 @@
             });
         }
         applyTheme(window.__AOI_THEME__ || 'light');
-        applyPalette(window.__AOI_PALETTE__ || 'softblue');
+        applyPalette(window.__AOI_PALETTE__ || 'navy');
 
         const dock = document.getElementById('aoPaletteDock');
         const toggle = document.getElementById('aoPaletteToggle');
