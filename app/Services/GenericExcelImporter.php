@@ -2,15 +2,14 @@
 
 namespace App\Services;
 
-use App\Models\ExcelImportBatch;
+use Throwable;
+use RuntimeException;
 use App\Models\ExcelModule;
 use App\Models\ExcelRecord;
+use App\Models\ExcelImportBatch;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use RuntimeException;
-use Throwable;
 
 class GenericExcelImporter
 {
@@ -18,10 +17,6 @@ class GenericExcelImporter
     private const SYSTEM_SHEET = '_System';
     private const CHUNK_SIZE = 300;
 
-    /**
-     * Common columns we try to extract specially (for indexing & filters).
-     * Keys are possible Arabic header names.
-     */
     private const SPECIAL_COLUMNS = [
         'unit_code' => ['كود الوحدة', 'كود الوحده', 'كود وحدة'],
         'unit_name' => ['الوحدة', 'اسم الوحدة', 'الوحده'],
@@ -30,59 +25,86 @@ class GenericExcelImporter
     ];
 
     /**
+     * إنشاء reader محسّن للذاكرة (يقرأ البيانات فقط).
+     */
+    private function makeReader(string $absolutePath): \PhpOffice\PhpSpreadsheet\Reader\IReader
+    {
+        $reader = IOFactory::createReaderForFile($absolutePath);
+
+        $reader->setReadDataOnly(true);     // تجاهل الأنماط والصور والرسوم
+        $reader->setReadEmptyCells(false);  // لا تحمّل الخلايا الفارغة
+
+        // حمّل فقط الأوراق التي نحتاجها
+        try {
+            $reader->setLoadSheetsOnly([self::DATA_SHEET, self::SYSTEM_SHEET]);
+        } catch (\Throwable $e) {
+            // بعض الصيغ لا تدعم setLoadSheetsOnly — آمن
+        }
+
+        return $reader;
+    }
+
+    /**
      * Preview only – returns structured data without saving.
      */
     public function preview(string $absolutePath): array
     {
-        $spreadsheet = IOFactory::load($absolutePath);
+        $reader = $this->makeReader($absolutePath);
+        $spreadsheet = $reader->load($absolutePath);
 
-        $system = $this->readSystemSheet($spreadsheet);
-        $moduleCode = $system['ModuleCode'] ?? null;
-        $moduleName = $system['Module'] ?? 'Unknown';
+        try {
+            $system = $this->readSystemSheet($spreadsheet);
+            $moduleCode = $system['ModuleCode'] ?? null;
+            $moduleName = $system['Module'] ?? 'Unknown';
 
-        if (!$moduleCode) {
-            throw new RuntimeException('ملف Excel لا يحتوي على ModuleCode في ورقة _System');
+            if (!$moduleCode) {
+                throw new RuntimeException('ملف Excel لا يحتوي على ModuleCode في ورقة _System');
+            }
+
+            $dataSheet = $spreadsheet->getSheetByName(self::DATA_SHEET);
+            if (!$dataSheet) {
+                throw new RuntimeException('ورقة "البيانات" غير موجودة في الملف');
+            }
+
+            $rows = $dataSheet->toArray(null, true, true, false);
+
+            if (count($rows) < 2) {
+                throw new RuntimeException('ورقة البيانات فارغة أو تحتوي على عناوين فقط');
+            }
+
+            $headers = array_map(fn ($h) => trim((string) $h), $rows[0]);
+            $dataRows = array_slice($rows, 1);
+
+            $dataRows = array_values(array_filter($dataRows, function ($row) {
+                return collect($row)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty();
+            }));
+
+            $previewRows = array_slice($dataRows, 0, 15);
+
+            return [
+                'module_code' => $moduleCode,
+                'module_name_ar' => $moduleName,
+                'template_version' => $system['TemplateVersion'] ?? null,
+                'headers' => $headers,
+                'total_rows' => count($dataRows),
+                'preview_rows' => $previewRows,
+                'file_hash' => hash_file('sha256', $absolutePath),
+            ];
+        } finally {
+            // ✅ حرّر الذاكرة دائمًا
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet);
         }
-
-        $dataSheet = $spreadsheet->getSheetByName(self::DATA_SHEET);
-        if (!$dataSheet) {
-            throw new RuntimeException('ورقة "البيانات" غير موجودة في الملف');
-        }
-
-        $rows = $dataSheet->toArray(null, true, true, false);
-        if (count($rows) < 2) {
-            throw new RuntimeException('ورقة البيانات فارغة أو تحتوي على عناوين فقط');
-        }
-
-        $headers = array_map(fn ($h) => trim((string) $h), $rows[0]);
-        $dataRows = array_slice($rows, 1);
-
-        // Clean empty trailing rows
-        $dataRows = array_values(array_filter($dataRows, function ($row) {
-            return collect($row)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty();
-        }));
-
-        $previewRows = array_slice($dataRows, 0, 15); // first 15 for UI
-
-        return [
-            'module_code' => $moduleCode,
-            'module_name_ar' => $moduleName,
-            'template_version' => $system['TemplateVersion'] ?? null,
-            'headers' => $headers,
-            'total_rows' => count($dataRows),
-            'preview_rows' => $previewRows,
-            'file_hash' => hash_file('sha256', $absolutePath),
-        ];
     }
 
     /**
      * Full import after user confirms the preview.
      */
     public function import(
-        string $storedPath,          // relative path on local disk
+        string $storedPath,
         string $originalFilename,
         int $userId,
-        bool $replaceExisting = true // if true → delete old records of this module
+        bool $replaceExisting = true
     ): ExcelImportBatch {
         $disk = Storage::disk('local');
         $absolutePath = $disk->path($storedPath);
@@ -97,7 +119,6 @@ class GenericExcelImporter
         return DB::transaction(function () use (
             $preview, $storedPath, $originalFilename, $userId, $fileHash, $replaceExisting, $absolutePath
         ) {
-            // 1. Upsert module
             $module = ExcelModule::updateOrCreate(
                 ['code' => $preview['module_code']],
                 [
@@ -107,7 +128,6 @@ class GenericExcelImporter
                 ]
             );
 
-            // 2. Check duplicate file
             $existingBatch = ExcelImportBatch::where('excel_module_id', $module->id)
                 ->where('file_hash', $fileHash)
                 ->where('status', 'completed')
@@ -117,7 +137,6 @@ class GenericExcelImporter
                 throw new RuntimeException('تم استيراد نفس الملف مسبقاً (نفس الـ hash).');
             }
 
-            // 3. Create batch
             $batch = ExcelImportBatch::create([
                 'excel_module_id' => $module->id,
                 'user_id' => $userId,
@@ -128,23 +147,30 @@ class GenericExcelImporter
                 'status' => 'processing',
             ]);
 
-            // 4. Optionally clear old data for this module
             if ($replaceExisting) {
                 ExcelRecord::where('excel_module_id', $module->id)->delete();
             }
 
-            // 5. Read full data and insert in chunks
-            $spreadsheet = IOFactory::load($absolutePath);
-            $dataSheet = $spreadsheet->getSheetByName(self::DATA_SHEET);
-            $allRows = $dataSheet->toArray(null, true, true, false);
+            // ✅ قراءة محسّنة للذاكرة
+            $reader = $this->makeReader($absolutePath);
+            $spreadsheet = $reader->load($absolutePath);
 
-            $headers = array_map(fn ($h) => trim((string) $h), $allRows[0]);
-            $headerKeys = $this->normalizeHeaders($headers);
+            try {
+                $dataSheet = $spreadsheet->getSheetByName(self::DATA_SHEET);
+                $allRows = $dataSheet->toArray(null, true, true, false);
 
-            $dataRows = array_slice($allRows, 1);
-            $dataRows = array_values(array_filter($dataRows, function ($row) {
-                return collect($row)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty();
-            }));
+                $headers = array_map(fn ($h) => trim((string) $h), $allRows[0]);
+                $headerKeys = $this->normalizeHeaders($headers);
+
+                $dataRows = array_slice($allRows, 1);
+                $dataRows = array_values(array_filter($dataRows, function ($row) {
+                    return collect($row)->filter(fn ($v) => $v !== null && $v !== '')->isNotEmpty();
+                }));
+            } finally {
+                // ✅ حرّر الذاكرة قبل الإدخال
+                $spreadsheet->disconnectWorksheets();
+                unset($spreadsheet, $dataSheet, $allRows);
+            }
 
             $imported = 0;
             $failed = 0;
@@ -187,7 +213,6 @@ class GenericExcelImporter
                 }
             }
 
-            // 6. Finalize
             $batch->update([
                 'imported_rows' => $imported,
                 'failed_rows' => $failed,
@@ -222,10 +247,6 @@ class GenericExcelImporter
         return $result;
     }
 
-    /**
-     * Convert Arabic headers to clean keys while keeping original as value.
-     * Example: "اسم خط الانتاج" → "اسم_خط_الانتاج"
-     */
     private function normalizeHeaders(array $headers): array
     {
         $keys = [];
@@ -236,12 +257,10 @@ class GenericExcelImporter
             if ($header === '') {
                 $key = "col_{$i}";
             } else {
-                // Keep Arabic but make it safe for JSON keys
                 $key = preg_replace('/\s+/', '_', $header);
                 $key = preg_replace('/[^\p{L}\p{N}_]/u', '', $key);
             }
 
-            // uniqueness
             $original = $key;
             $counter = 1;
             while (isset($used[$key])) {
@@ -258,7 +277,6 @@ class GenericExcelImporter
     {
         $candidates = self::SPECIAL_COLUMNS[$type] ?? [];
         foreach ($candidates as $candidate) {
-            // try exact and normalized
             foreach ($payload as $k => $v) {
                 if ($k === $candidate || str_contains($k, $candidate)) {
                     return $v;
@@ -268,9 +286,6 @@ class GenericExcelImporter
         return null;
     }
 
-    /**
-     * Parse coordinate safely. Returns null if empty / non-numeric / extreme.
-     */
     private function normalizeCoordinate(mixed $value): ?float
     {
         if ($value === null || $value === '') {
@@ -287,7 +302,6 @@ class GenericExcelImporter
 
         $f = (float) $value;
 
-        // إحداثيات جغرافية منطقية تقريباً
         if ($f < -180 || $f > 180) {
             return null;
         }

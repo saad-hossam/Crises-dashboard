@@ -31,7 +31,8 @@
     @endif
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/css/admin.css') }}?v={{ @filemtime(public_path('assets/css/admin.css')) ?: time() }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/modern.css') }}?v={{ @filemtime(public_path('assets/css/modern.css')) ?: time() }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/palette.css') }}?v={{ @filemtime(public_path('assets/css/modern.css')) ?: time() }}">
+    
     @stack('styles')
 </head>
 <body class="admin-body locale-{{ app()->getLocale() }}">
@@ -49,31 +50,61 @@
     </div>
     <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
-    {{-- Color palette — fixed LEFT edge --}}
-    <aside class="ao-palette-dock" id="aoPaletteDock" aria-label="Color palette">
-        <button type="button" class="ao-palette-toggle" id="aoPaletteToggle" title="Theme & colors" aria-expanded="false">
-            <i class="bi bi-palette2"></i>
-        </button>
-        <div class="ao-palette-panel" id="aoPalettePanel">
-            <div class="ao-palette-header">
-                <span>Colors</span>
-                <button type="button" class="ao-palette-close" id="aoPaletteClose" aria-label="Close">&times;</button>
-            </div>
-            <div class="ao-palette-title">Palette</div>
-                                                <div class="ao-palette-swatches">
-                <button type="button" class="ao-swatch" data-palette="navy" style="--sw:#2c5282" title="Navy"><span>Navy</span></button>
-                <button type="button" class="ao-swatch" data-palette="graphite" style="--sw:#556274" title="Graphite"><span>Graphite</span></button>
-                <button type="button" class="ao-swatch" data-palette="forest" style="--sw:#3d7a6a" title="Forest"><span>Forest</span></button>
-                <button type="button" class="ao-swatch" data-palette="steel" style="--sw:#4a7594" title="Steel"><span>Steel</span></button>
-                <button type="button" class="ao-swatch" data-palette="wine" style="--sw:#854a5c" title="Wine"><span>Wine</span></button>
-            </div>
-            <div class="ao-palette-title">Appearance</div>
-            <div class="ao-palette-modes">
-                <button type="button" class="ao-mode-btn" data-theme="light"><i class="bi bi-sun-fill"></i> Light</button>
-                <button type="button" class="ao-mode-btn" data-theme="dark"><i class="bi bi-moon-stars-fill"></i> Dark</button>
-            </div>
+  {{-- ============================================================
+     PALETTE DOCK — Left Side
+     ============================================================ --}}
+<div class="ao-palette-dock" id="aoPaletteDock">
+    <button type="button"
+            class="ao-palette-toggle"
+            id="aoPaletteToggle"
+            title="تغيير الألوان"
+            aria-label="تغيير الألوان">
+        <i class="bi bi-palette-fill"></i>
+    </button>
+
+    <div class="ao-palette-panel">
+        <div class="ao-palette-header">
+            <span>الألوان</span>
+            <button type="button" class="ao-palette-close" id="aoPaletteClose" aria-label="إغلاق">×</button>
         </div>
-    </aside>
+
+        <div class="ao-palette-title">اللوحة</div>
+        <div class="ao-palette-swatches">
+            {{-- AOI Brand (Default) --}}
+            <button type="button" class="ao-swatch" data-palette="aoi" style="--sw:#f37321;">
+                <span>AOI — برتقالي</span>
+            </button>
+            {{-- Black --}}
+            <button type="button" class="ao-swatch" data-palette="black" style="--sw:#1a1a1a;">
+                <span>أسود</span>
+            </button>
+            {{-- Blue --}}
+            <button type="button" class="ao-swatch" data-palette="blue" style="--sw:#2e75b6;">
+                <span>أزرق</span>
+            </button>
+            {{-- Graphite --}}
+            <button type="button" class="ao-swatch" data-palette="graphite" style="--sw:#4a4a4a;">
+                <span>رمادي</span>
+            </button>
+            {{-- Orange Deep --}}
+            <button type="button" class="ao-swatch" data-palette="orange-deep" style="--sw:#c45a0e;">
+                <span>برتقالي غامق</span>
+            </button>
+        </div>
+
+        <div class="ao-palette-title">الوضع</div>
+        <div class="ao-palette-modes">
+            <button type="button" class="ao-mode-btn" data-theme="light">
+                <i class="bi bi-sun-fill"></i>
+                <span>نهاري</span>
+            </button>
+            <button type="button" class="ao-mode-btn" data-theme="dark">
+                <i class="bi bi-moon-stars-fill"></i>
+                <span>ليلي</span>
+            </button>
+        </div>
+    </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('assets/js/admin.js') }}?v={{ @filemtime(public_path('assets/js/admin.js')) ?: time() }}"></script>

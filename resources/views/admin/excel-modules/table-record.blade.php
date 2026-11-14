@@ -9,168 +9,38 @@
 <li class="breadcrumb-item active">#{{ $record->id }}</li>
 @endsection
 
-@push('styles')
-<style>
-/* ===== Aliases (local fallback) ===== */
-:root {
-    --aoi-primary: var(--admin-primary, #E87524);
-    --aoi-surface: var(--admin-white, #fff);
-    --aoi-border:  var(--admin-border, #e2e8f0);
-    --aoi-muted:   var(--admin-muted, #64748b);
-    --aoi-text:    var(--admin-text, #0f172a);
-}
-
-
-/* Hero (color-mix with fallback) */
-.ao-detail-hero {
-    background: #17365D;
-    background: linear-gradient(
-        135deg,
-        color-mix(in srgb, var(--aoi-primary) 92%, #0f172a),
-        var(--aoi-primary)
-    );
-    color: #fff;
-    border-radius: 18px;
-    padding: 1.35rem 1.5rem;
-    box-shadow: 0 12px 30px rgba(15,23,42,.12);
-}
-.ao-detail-title { font-size: 1.35rem; font-weight: 800; margin: 0; word-break: break-word; }
-.ao-detail-badge {
-    display: inline-flex; align-items: center; gap: .35rem;
-    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22);
-    color: #fff; border-radius: 999px; padding: .2rem .65rem; font-size: .75rem; font-weight: 600;
-}
-.ao-detail-meta { display: flex; flex-wrap: wrap; gap: .75rem 1.1rem; opacity: .92; font-size: .875rem; }
-.ao-detail-meta i { opacity: .85; margin-inline-end: .25rem; }
-
-/* KPI */
-.ao-detail-kpi {
-    background: var(--aoi-surface);
-    border: 1px solid var(--aoi-border);
-    border-radius: 14px;
-    padding: 1rem 1.1rem;
-    height: 100%;
-    box-shadow: 0 1px 2px rgba(15,23,42,.04);
-}
-.ao-detail-kpi-label { font-size: .75rem; color: var(--aoi-muted); font-weight: 600; margin-bottom: .35rem; }
-.ao-detail-kpi-value { font-size: 1.05rem; font-weight: 800; color: var(--aoi-text); line-height: 1.3; }
-
-/* Group card */
-.ao-group-card {
-    background: var(--aoi-surface);
-    border: 1px solid var(--aoi-border);
-    border-radius: 16px;
-    overflow: hidden;
-    height: 100%;
-    box-shadow: 0 1px 2px rgba(15,23,42,.04);
-}
-.ao-group-head {
-    display: flex; align-items: center; gap: .5rem;
-    padding: .85rem 1.1rem;
-    background: #f8fafc;
-    background: color-mix(in srgb, var(--aoi-primary) 6%, var(--aoi-surface));
-    border-bottom: 1px solid var(--aoi-border);
-    font-weight: 700; font-size: .92rem;
-}
-.ao-group-head i { color: var(--aoi-primary); }
-.ao-group-body { padding: .35rem 0; }
-
-.ao-field-row {
-    display: grid;
-    grid-template-columns: minmax(120px, 38%) 1fr;
-    gap: .75rem;
-    padding: .7rem 1.1rem;
-    border-bottom: 1px solid var(--aoi-border);
-}
-.ao-field-row:last-child { border-bottom: 0; }
-.ao-field-row:hover {
-    background: #fef6ee;
-    background: color-mix(in srgb, var(--aoi-primary) 4%, transparent);
-}
-.ao-field-label {
-    font-size: .8rem; font-weight: 600; color: var(--aoi-muted);
-    line-height: 1.4;
-}
-.ao-field-value {
-    font-size: .9rem; font-weight: 600; color: var(--aoi-text);
-    word-break: break-word; line-height: 1.45;
-}
-.ao-field-value.empty { color: var(--aoi-muted); font-weight: 500; }
-
-/* Coord chip */
-.ao-coord-chip {
-    display: inline-flex; align-items: center; gap: .35rem;
-    background: #fff7ed;
-    background: color-mix(in srgb, var(--aoi-primary) 8%, #fff);
-    border: 1px solid #fed7aa;
-    border-color: color-mix(in srgb, var(--aoi-primary) 18%, #e2e8f0);
-    color: var(--aoi-primary);
-    border-radius: 999px; padding: .25rem .7rem; font-size: .8rem; font-weight: 600;
-    text-decoration: none;
-}
-.ao-coord-chip:hover {
-    background: #ffedd5;
-    background: color-mix(in srgb, var(--aoi-primary) 14%, #fff);
-    color: var(--aoi-primary);
-}
-
-/* Responsive */
-@media (max-width: 575.98px) {
-    .ao-field-row { grid-template-columns: 1fr; gap: .25rem; padding: .65rem 1rem; }
-    .ao-detail-title { font-size: 1.15rem; }
-}
-
-/* Dark mode */
-.admin-wrapper.dark-mode .ao-detail-kpi,
-.admin-wrapper.dark-mode .ao-group-card {
-    background: #1e293b;
-    border-color: #334155;
-}
-.admin-wrapper.dark-mode .ao-field-label,
-.admin-wrapper.dark-mode .ao-detail-kpi-label { color: #94a3b8; }
-.admin-wrapper.dark-mode .ao-field-value,
-.admin-wrapper.dark-mode .ao-detail-kpi-value { color: #e2e8f0; }
-.admin-wrapper.dark-mode .ao-group-head {
-    background: #17243a;
-    border-color: #334155;
-    color: #e2e8f0;
-}
-</style>
-@endpush
 
 @section('content')
 @php
-    /* ========= 1. label map (supports both config shapes) ========= */
+    /* ========= 1. Label map ========= */
     $rawColumns = $config['columns'] ?? [];
     $labelMap = [];
     foreach ($rawColumns as $k => $v) {
         if (is_string($k) && is_string($v)) {
-            // shape A: ['الاسم العربي' => 'db_column']
             $labelMap[$v] = $k;
         } elseif (is_string($v)) {
-            // shape B: [0 => 'db_column']
             $labelMap[$v] = str_replace('_', ' ', $v);
         }
     }
 
-    /* ========= 2. title fallback ========= */
+    /* ========= 2. Title ========= */
     $title = collect([
-        $record->name           ?? null,
-        $record->name_ar        ?? null,
-        $record->site_name      ?? null,
+        $record->name ?? null,
+        $record->name_ar ?? null,
+        $record->site_name ?? null,
         $record->warehouse_name ?? null,
-        $record->facility_name  ?? null,
-        $record->product_name   ?? null,
-        $record->unit_name      ?? null,
-        $record->company_name   ?? null,
+        $record->facility_name ?? null,
+        $record->product_name ?? null,
+        $record->unit_name ?? null,
+        $record->company_name ?? null,
     ])->first(fn ($v) => filled($v)) ?? ('#'.$record->id);
 
-    /* ========= 3. groups ========= */
+    /* ========= 3. Groups ========= */
     $groupsDef = [
         'identity' => [
             'title' => 'البيانات الأساسية',
             'icon'  => 'bi-card-heading',
-            'keys'  => ['unit_code','unit_name','name','name_ar','name_en','company_name','owner_organization','product_name','site_name','warehouse_name','facility_name','asset_name','line_name'],
+            'keys'  => ['unit_code','unit_name','name','name_ar','name_en','company_name','owner_organization','product_name','site_name','warehouse_name','facility_name','asset_name','line_name','machine_name'],
         ],
         'location' => [
             'title' => 'الموقع والعنوان',
@@ -180,7 +50,7 @@
         'status' => [
             'title' => 'الحالة والجاهزية',
             'icon'  => 'bi-activity',
-            'keys'  => ['operating_status','readiness_level','line_status','status','station_status','technical_status'],
+            'keys'  => ['operating_status','readiness_level','line_status','status','station_status','technical_status','machine_status'],
         ],
         'capacity' => [
             'title' => 'السعات والطاقة',
@@ -204,7 +74,7 @@
         $grouped[$gKey] = ['title' => $g['title'], 'icon' => $g['icon'], 'items' => []];
     }
 
-    /* ========= 4. iterate columns safely ========= */
+    /* ========= 4. Iterate columns ========= */
     $allColumns = $columns ?? array_keys($labelMap);
 
     foreach ($allColumns as $col) {
@@ -222,135 +92,223 @@
         }
     }
 
-    // drop empty groups
     $grouped = array_filter($grouped, fn ($g) => count($g['items']) > 0);
 
     /* ========= 5. KPIs ========= */
-    $kpiStatus = $record->operating_status ?? $record->line_status ?? $record->station_status ?? '—';
+    $kpiStatus = $record->operating_status ?? $record->line_status ?? $record->station_status ?? $record->machine_status ?? '—';
     $kpiReady  = $record->readiness_level ?? '—';
     $kpiGov    = $record->governorate ?? '—';
     $kpiUnit   = $record->unit_name ?? $record->company_name ?? $record->owner_organization ?? '—';
 
-    /* ========= 6. coordinates ========= */
+    /* ========= 6. Coords ========= */
     $hasCoords = ($record->x_coordinate !== null && $record->y_coordinate !== null);
+
+    /* ========= 7. Status helper ========= */
+    $statusClass = function ($status) {
+        if (!$status || $status === '—') return 'rd-status-neutral';
+        $s = mb_strtolower((string)$status);
+        if (str_contains($s, 'oper') || str_contains($s, 'good') || str_contains($s, 'جاهز') || str_contains($s, 'يعمل')) return 'rd-status-good';
+        if (str_contains($s, 'warn') || str_contains($s, 'medium') || str_contains($s, 'متوسط') || str_contains($s, 'صيانة')) return 'rd-status-warn';
+        if (str_contains($s, 'bad') || str_contains($s, 'fail') || str_contains($s, 'broken') || str_contains($s, 'معطل')) return 'rd-status-bad';
+        return 'rd-status-neutral';
+    };
 @endphp
 
-<div class="ao-detail-page">
+<div class="rd-page" dir="rtl" id="rdPage">
 
-    {{-- Hero --}}
-    <div class="ao-detail-hero mb-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
-            <div class="min-w-0">
-                <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
-                    <span class="ao-detail-badge">
-                        <i class="bi bi-grid-3x3-gap"></i>{{ $moduleCode }}
-                    </span>
-                    <span class="ao-detail-badge">{{ $config['name_ar'] ?? $moduleCode }}</span>
-                    <span class="ao-detail-badge">#{{ $record->id }}</span>
-                </div>
-                <h2 class="ao-detail-title mb-2">{{ $title }}</h2>
-                <div class="ao-detail-meta">
-                    @if(!empty($record->unit_code))
-                        <span><i class="bi bi-hash"></i>{{ $record->unit_code }}</span>
-                    @endif
-                    @if(!empty($record->governorate))
-                        <span><i class="bi bi-geo-alt"></i>{{ $record->governorate }}</span>
-                    @endif
-                    @if($kpiStatus !== '—')
-                        <span><i class="bi bi-activity"></i>{{ $kpiStatus }}</span>
-                    @endif
-                    @if($kpiReady !== '—')
-                        <span><i class="bi bi-shield-check"></i>{{ $kpiReady }}</span>
-                    @endif
-                </div>
+    {{-- ============================================================
+         HERO
+         ============================================================ --}}
+    <div class="rd-hero">
+        <div class="rd-hero-content">
+            <div class="rd-hero-badges">
+                <span class="rd-badge"><i class="bi bi-grid-3x3-gap"></i>{{ $moduleCode }}</span>
+                <span class="rd-badge"><i class="bi bi-table"></i>{{ $config['name_ar'] ?? $moduleCode }}</span>
+                <span class="rd-badge rd-badge-primary"><i class="bi bi-hash"></i>{{ $record->id }}</span>
             </div>
-            <div class="d-flex flex-wrap gap-2">
+            <h1 class="rd-hero-title">{{ $title }}</h1>
+            <div class="rd-hero-meta">
+                @if(!empty($record->unit_code))
+                    <span><i class="bi bi-hash"></i>{{ $record->unit_code }}</span>
+                @endif
+                @if(!empty($record->governorate))
+                    <span><i class="bi bi-geo-alt"></i>{{ $record->governorate }}</span>
+                @endif
+                @if($kpiStatus !== '—')
+                    <span><i class="bi bi-activity"></i>{{ $kpiStatus }}</span>
+                @endif
+                @if($kpiReady !== '—')
+                    <span><i class="bi bi-shield-check"></i>{{ $kpiReady }}</span>
+                @endif
+            </div>
+            <div class="rd-hero-actions">
                 @if($hasCoords)
-                    <a class="btn btn-light btn-sm fw-semibold"
+                    <a class="rd-hero-btn"
                        target="_blank" rel="noopener"
                        href="https://www.google.com/maps?q={{ $record->y_coordinate }},{{ $record->x_coordinate }}">
-                        <i class="bi bi-map me-1"></i> فتح الخريطة
+                        <i class="bi bi-map"></i>
+                        <span>فتح الخريطة</span>
                     </a>
                 @endif
+                <button type="button" class="rd-hero-btn" id="rdCopyAll">
+                    <i class="bi bi-clipboard"></i>
+                    <span>نسخ الكل</span>
+                </button>
+                <button type="button" class="rd-hero-btn" id="rdDownloadJson">
+                    <i class="bi bi-download"></i>
+                    <span>تحميل JSON</span>
+                </button>
                 <a href="{{ route('admin.excel-modules.table', $moduleCode) }}"
-                   class="btn btn-outline-light btn-sm fw-semibold">
-                    <i class="bi bi-arrow-{{ app()->getLocale()==='ar' ? 'left' : 'right' }} me-1"></i>
-                    {{ __('excel.back_to_table') ?? 'العودة للجدول' }}
+                   class="rd-hero-btn rd-hero-btn-primary">
+                    <i class="bi bi-arrow-{{ app()->getLocale()==='ar' ? 'right' : 'left' }}"></i>
+                    <span>العودة للجدول</span>
                 </a>
             </div>
         </div>
     </div>
 
-    {{-- KPIs --}}
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="ao-detail-kpi">
-                <div class="ao-detail-kpi-label"><i class="bi bi-upc me-1"></i> المعرّف</div>
-                <div class="ao-detail-kpi-value">#{{ $record->id }}</div>
+    {{-- ============================================================
+         KPIs
+         ============================================================ --}}
+    <div class="rd-kpis">
+        <div class="rd-kpi">
+            <div class="rd-kpi-icon" style="background:#0d6efd;">
+                <i class="bi bi-hash"></i>
+            </div>
+            <div class="rd-kpi-body">
+                <div class="rd-kpi-label">المعرّف</div>
+                <div class="rd-kpi-value">#{{ $record->id }}</div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="ao-detail-kpi">
-                <div class="ao-detail-kpi-label"><i class="bi bi-building me-1"></i> الوحدة / الجهة</div>
-                <div class="ao-detail-kpi-value text-truncate" title="{{ $kpiUnit }}">{{ $kpiUnit }}</div>
+        <div class="rd-kpi">
+            <div class="rd-kpi-icon" style="background:#10b981;">
+                <i class="bi bi-building"></i>
+            </div>
+            <div class="rd-kpi-body">
+                <div class="rd-kpi-label">الوحدة / الجهة</div>
+                <div class="rd-kpi-value" title="{{ $kpiUnit }}">{{ $kpiUnit }}</div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="ao-detail-kpi">
-                <div class="ao-detail-kpi-label"><i class="bi bi-activity me-1"></i> حالة التشغيل</div>
-                <div class="ao-detail-kpi-value">{{ $kpiStatus }}</div>
+        <div class="rd-kpi">
+            <div class="rd-kpi-icon" style="background:#f59e0b;">
+                <i class="bi bi-activity"></i>
+            </div>
+            <div class="rd-kpi-body">
+                <div class="rd-kpi-label">حالة التشغيل</div>
+                <div class="rd-kpi-value">
+                    <span class="rd-status-pill {{ $statusClass($kpiStatus) }}">{{ $kpiStatus }}</span>
+                </div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
-            <div class="ao-detail-kpi">
-                <div class="ao-detail-kpi-label"><i class="bi bi-geo-alt me-1"></i> المحافظة</div>
-                <div class="ao-detail-kpi-value">{{ $kpiGov }}</div>
+        <div class="rd-kpi">
+            <div class="rd-kpi-icon" style="background:#8b5cf6;">
+                <i class="bi bi-geo-alt"></i>
+            </div>
+            <div class="rd-kpi-body">
+                <div class="rd-kpi-label">المحافظة</div>
+                <div class="rd-kpi-value">{{ $kpiGov }}</div>
             </div>
         </div>
     </div>
 
-    {{-- Coordinates --}}
+    {{-- ============================================================
+         MAP + COORDS
+         ============================================================ --}}
     @if($hasCoords)
-        <div class="mb-4 d-flex flex-wrap gap-2 align-items-center">
-            <a class="ao-coord-chip" target="_blank" rel="noopener"
-               href="https://www.google.com/maps?q={{ $record->y_coordinate }},{{ $record->x_coordinate }}">
-                <i class="bi bi-geo-alt-fill"></i>
-                X: {{ $record->x_coordinate }} · Y: {{ $record->y_coordinate }}
-                <i class="bi bi-box-arrow-up-left ms-1"></i>
-            </a>
-            <span class="text-muted small">اضغط لفتح الموقع في خرائط Google</span>
+        <div class="rd-map-row">
+            <div class="rd-map-wrapper">
+                <iframe
+                    loading="lazy"
+                    src="https://www.openstreetmap.org/export/embed.html?bbox={{ (float)$record->x_coordinate - 0.01 }},{{ (float)$record->y_coordinate - 0.01 }},{{ (float)$record->x_coordinate + 0.01 }},{{ (float)$record->y_coordinate + 0.01 }}&layer=mapnik&marker={{ $record->y_coordinate }},{{ $record->x_coordinate }}"
+                    title="الخريطة">
+                </iframe>
+            </div>
+            <div class="rd-map-info">
+                <h3 class="rd-map-title">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    الموقع الجغرافي
+                </h3>
+                <a class="rd-coord-chip" target="_blank" rel="noopener"
+                   href="https://www.google.com/maps?q={{ $record->y_coordinate }},{{ $record->x_coordinate }}">
+                    <i class="bi bi-pin-map-fill"></i>
+                    X: {{ $record->x_coordinate }} · Y: {{ $record->y_coordinate }}
+                    <i class="bi bi-box-arrow-up-left"></i>
+                </a>
+                <p class="rd-map-meta mb-0">
+                    اضغط على الإحداثيات لفتح الموقع في خرائط Google
+                </p>
+            </div>
         </div>
     @endif
 
-    {{-- Grouped fields --}}
-    <div class="row g-3">
-        @foreach($grouped as $g)
-            <div class="col-12 col-lg-6">
-                <div class="ao-group-card">
-                    <div class="ao-group-head">
-                        <i class="bi {{ $g['icon'] }}"></i>
+    {{-- ============================================================
+         TOOLBAR
+         ============================================================ --}}
+    <div class="rd-toolbar">
+        <div class="rd-toolbar-info">
+            <i class="bi bi-list-check text-primary"></i>
+            <span>الحقول</span>
+            <span class="rd-toolbar-count">{{ collect($grouped)->sum(fn($g) => count($g['items'])) }}</span>
+            <span class="text-muted small d-none d-md-inline">· {{ count($grouped) }} مجموعات</span>
+        </div>
+        <div class="rd-toolbar-actions">
+            <div class="rd-field-search-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" id="rdFieldSearch" class="rd-field-search" placeholder="ابحث في الحقول...">
+            </div>
+        </div>
+    </div>
+
+    {{-- ============================================================
+         GROUPS
+         ============================================================ --}}
+    @php
+        $groupColors = [
+            'identity' => '#0d6efd',
+            'location' => '#10b981',
+            'status'   => '#f59e0b',
+            'capacity' => '#8b5cf6',
+            'org'      => '#ec4899',
+            'other'    => '#64748b',
+        ];
+    @endphp
+    <div class="row g-3" id="rdGroups">
+        @forelse($grouped as $gKey => $g)
+            <div class="col-12 col-lg-6 rd-group-col" data-group="{{ $gKey }}">
+                <div class="rd-group">
+                    <div class="rd-group-head" style="border-right: 3px solid {{ $groupColors[$gKey] ?? '#0d6efd' }};">
+                        <i class="bi {{ $g['icon'] }}" style="color: {{ $groupColors[$gKey] ?? '#0d6efd' }};"></i>
                         <span>{{ $g['title'] }}</span>
-                        <span class="badge bg-primary-subtle text-primary border ms-auto">
-                            {{ count($g['items']) }}
-                        </span>
+                        <span class="rd-group-count">{{ count($g['items']) }}</span>
                     </div>
-                    <div class="ao-group-body">
+                    <div class="rd-group-body">
                         @foreach($g['items'] as $col => $value)
                             @php
                                 $label   = $labelMap[$col] ?? str_replace('_', ' ', $col);
                                 $isEmpty = $value === null || $value === '';
                                 $strVal  = (string) $value;
-                                $isLong  = mb_strlen($strVal) > 200;
+                                $isLong  = mb_strlen($strVal) > 180;
                             @endphp
-                            <div class="ao-field-row">
-                                <div class="ao-field-label">{{ $label }}</div>
-                                <div class="ao-field-value {{ $isEmpty ? 'empty' : '' }}" title="{{ $strVal }}">
+                            <div class="rd-field"
+                                 data-field-label="{{ mb_strtolower($label) }}"
+                                 data-field-value="{{ mb_strtolower($strVal) }}">
+                                <div class="rd-field-label">
+                                    <span>{{ $label }}</span>
+                                    @if(!$isEmpty)
+                                        <button type="button" class="copy-btn"
+                                                data-copy="{{ $strVal }}"
+                                                title="نسخ القيمة">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                                <div class="rd-field-value {{ $isEmpty ? 'empty' : '' }} {{ $isLong ? 'long' : '' }}">
                                     @if($isEmpty)
                                         —
                                     @elseif($isLong)
                                         <details>
-                                            <summary>{{ \Illuminate\Support\Str::limit($strVal, 180) }}</summary>
-                                            <div class="mt-1">{{ $strVal }}</div>
+                                            <summary>{{ \Illuminate\Support\Str::limit($strVal, 160) }}</summary>
+                                            <div class="rd-full-text">{{ $strVal }}</div>
                                         </details>
                                     @else
                                         {{ $strVal }}
@@ -361,8 +319,122 @@
                     </div>
                 </div>
             </div>
-        @endforeach
+        @empty
+            <div class="col-12">
+                <div class="rd-empty">
+                    <i class="bi bi-inbox"></i>
+                    <p>لا توجد بيانات متاحة</p>
+                </div>
+            </div>
+        @endforelse
+    </div>
+
+    {{-- No Results --}}
+    <div class="rd-empty d-none" id="rdNoResults">
+        <i class="bi bi-search"></i>
+        <p>لا توجد حقول مطابقة للبحث</p>
     </div>
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const page = document.getElementById('rdPage');
+    if (!page) return;
+
+    const recordData = @json($record->toArray());
+
+    // ==================== COPY SINGLE FIELD ====================
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const text = this.dataset.copy || '';
+            navigator.clipboard.writeText(text).then(() => {
+                const original = this.innerHTML;
+                this.innerHTML = '<i class="bi bi-check2"></i>';
+                setTimeout(() => { this.innerHTML = original; }, 1200);
+            }).catch(err => {
+                console.error('Copy failed', err);
+            });
+        });
+    });
+
+    // ==================== COPY ALL ====================
+    const copyAllBtn = document.getElementById('rdCopyAll');
+    if (copyAllBtn) {
+        copyAllBtn.addEventListener('click', function () {
+            const text = Object.entries(recordData)
+                .map(([k, v]) => `${k}: ${v ?? ''}`)
+                .join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                const span = this.querySelector('span');
+                const original = span.textContent;
+                span.textContent = 'تم النسخ ✓';
+                this.style.background = 'rgba(16,185,129,.3)';
+                setTimeout(() => {
+                    span.textContent = original;
+                    this.style.background = '';
+                }, 1500);
+            });
+        });
+    }
+
+    // ==================== DOWNLOAD JSON ====================
+    const downloadBtn = document.getElementById('rdDownloadJson');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function () {
+            const blob = new Blob(
+                [JSON.stringify(recordData, null, 2)],
+                { type: 'application/json;charset=utf-8' }
+            );
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `record-{{ $moduleCode }}-{{ $record->id }}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    // ==================== FIELD SEARCH ====================
+    const searchInput = document.getElementById('rdFieldSearch');
+    const noResults = document.getElementById('rdNoResults');
+    const groupCols = document.querySelectorAll('.rd-group-col');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const q = this.value.trim().toLowerCase();
+            let totalVisible = 0;
+
+            groupCols.forEach(col => {
+                let visibleInGroup = 0;
+                col.querySelectorAll('.rd-field').forEach(field => {
+                    const label = field.dataset.fieldLabel || '';
+                    const value = field.dataset.fieldValue || '';
+                    const match = !q || label.includes(q) || value.includes(q);
+                    field.classList.toggle('hidden', !match);
+                    if (match) visibleInGroup++;
+                });
+                // Hide group if no fields match
+                const show = !q || visibleInGroup > 0;
+                col.style.display = show ? '' : 'none';
+                totalVisible += visibleInGroup;
+            });
+
+            noResults.classList.toggle('d-none', totalVisible > 0);
+        });
+    }
+
+    // ==================== CTRL+F SHORTCUT ====================
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f' && searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+            searchInput.select();
+        }
+    });
+});
+</script>
+@endpush

@@ -3,37 +3,37 @@
 @section('title', __('auth.login_title'))
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('assets/css/auth.css') }}?v=3">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
 @endpush
 
 @section('content')
-
 <div class="auth-page" id="authPage">
 
-    {{-- Animated background --}}
-    <div class="auth-background" id="authBackground">
-        <div class="auth-orb auth-orb-one" data-parallax="0.03"></div>
-        <div class="auth-orb auth-orb-two" data-parallax="-0.02"></div>
-        <div class="auth-orb auth-orb-three" data-parallax="0.05"></div>
+    {{-- ==================== ANIMATED BACKGROUND ==================== --}}
+    <div class="auth-background" aria-hidden="true">
+        <div class="auth-orb auth-orb-one"></div>
+        <div class="auth-orb auth-orb-two"></div>
+        <div class="auth-orb auth-orb-three"></div>
         <div class="auth-grid"></div>
-        <div class="auth-noise"></div>
     </div>
 
     <div class="auth-shell">
 
-        {{-- LEFT: Brand / marketing panel (hidden on small screens) --}}
+        {{-- ==================== SIDE PANEL ==================== --}}
         <aside class="auth-side">
             <div class="auth-side-inner">
 
                 <div class="auth-side-brand">
                     <div class="auth-side-icon">
-                        <i class="bi bi-shield-lock-fill"></i>
+                        <i class="bi bi-gear-wide-connected"></i>
                     </div>
                     <span>{{ __('common.app_name') }}</span>
                 </div>
 
                 <h2 class="auth-side-title">
-                    {{ __('auth.side_title') ?? 'إدارة الأزمات، بذكاء.' }}
+                    {{ __('auth.side_title') ?? 'إدارة الأزمات،' }}<br>
+                    <span>{{ __('auth.side_title_highlight') ?? 'بذكاء.' }}</span>
                 </h2>
 
                 <p class="auth-side-sub">
@@ -47,7 +47,7 @@
                 </ul>
 
                 <div class="auth-side-footer">
-                    <div class="auth-avatars">
+                    <div class="auth-avatars" aria-hidden="true">
                         <span>م</span><span>س</span><span>ن</span><span>+</span>
                     </div>
                     <div class="auth-side-caption">
@@ -59,15 +59,14 @@
             </div>
         </aside>
 
-        {{-- RIGHT: Login form --}}
+        {{-- ==================== MAIN FORM ==================== --}}
         <main class="auth-main">
-
             <div class="auth-container">
 
                 {{-- Mobile brand --}}
                 <div class="auth-brand">
                     <div class="auth-brand-icon">
-                        <i class="bi bi-shield-lock-fill"></i>
+                        <i class="bi bi-gear-wide-connected"></i>
                     </div>
                     <span>{{ __('common.app_name') }}</span>
                 </div>
@@ -83,7 +82,6 @@
                         <p class="auth-subtitle">{{ __('auth.login_subtitle') }}</p>
                     </div>
 
-                    {{-- Session error --}}
                     @if (session('error'))
                         <div class="auth-alert" role="alert">
                             <i class="bi bi-exclamation-circle-fill"></i>
@@ -91,7 +89,6 @@
                         </div>
                     @endif
 
-                    {{-- Validation errors --}}
                     @if ($errors->any())
                         <div class="auth-alert" role="alert">
                             <i class="bi bi-exclamation-circle-fill"></i>
@@ -109,7 +106,6 @@
                         {{-- Email --}}
                         <div class="auth-field" data-field="email">
                             <label for="email" class="auth-label">{{ __('auth.email') }}</label>
-
                             <div class="auth-input-wrapper">
                                 <i class="bi bi-envelope auth-input-icon"></i>
                                 <input
@@ -125,9 +121,7 @@
                                     inputmode="email"
                                     spellcheck="false"
                                 >
-                                <span class="auth-input-status" data-status-for="email"></span>
                             </div>
-
                             @error('email')
                                 <div class="auth-field-error">{{ $message }}</div>
                             @enderror
@@ -136,7 +130,6 @@
                         {{-- Password --}}
                         <div class="auth-field" data-field="password">
                             <label for="password" class="auth-label">{{ __('auth.password') }}</label>
-
                             <div class="auth-input-wrapper">
                                 <i class="bi bi-lock auth-input-icon"></i>
                                 <input
@@ -158,13 +151,10 @@
                                     <i class="bi bi-eye" id="toggleIcon"></i>
                                 </button>
                             </div>
-
-                            {{-- Caps lock hint --}}
                             <div class="auth-hint d-none" id="capsHint">
                                 <i class="bi bi-exclamation-triangle-fill"></i>
                                 {{ __('auth.caps_lock_on') ?? 'Caps Lock مفعّل' }}
                             </div>
-
                             @error('password')
                                 <div class="auth-field-error">{{ $message }}</div>
                             @enderror
@@ -197,7 +187,6 @@
                             </span>
                         </button>
 
-                        {{-- Keyboard hint --}}
                         <div class="auth-kbd-hint">
                             <kbd>Enter</kbd> {{ __('auth.kbd_hint') ?? 'للدخول السريع' }}
                         </div>
@@ -231,9 +220,103 @@
     </div>
 
 </div>
-
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('assets/js/auth.js') }}?v=3"></script>
+<script>
+(function () {
+    'use strict';
+
+    const form = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('togglePassword');
+    const toggleIcon = document.getElementById('toggleIcon');
+    const capsHint = document.getElementById('capsHint');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginBtnText = document.getElementById('loginBtnText');
+    const loginSpinner = document.getElementById('loginSpinner');
+
+    if (!form) return;
+
+    // ==================== PASSWORD TOGGLE ====================
+    if (toggleBtn && passwordInput) {
+        toggleBtn.addEventListener('click', function () {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            toggleIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            this.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
+        });
+    }
+
+    // ==================== CAPS LOCK ====================
+    if (passwordInput && capsHint) {
+        const checkCaps = (e) => {
+            if (typeof e.getModifierState === 'function') {
+                capsHint.classList.toggle('d-none', !e.getModifierState('CapsLock'));
+            }
+        };
+        passwordInput.addEventListener('keydown', checkCaps);
+        passwordInput.addEventListener('keyup', checkCaps);
+        passwordInput.addEventListener('blur', () => capsHint.classList.add('d-none'));
+    }
+
+    // ==================== VALIDATION ====================
+    function validateEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function showFieldError(input, message) {
+        input.classList.add('is-invalid');
+        let errorEl = input.closest('.auth-field').querySelector('.auth-field-error');
+        if (!errorEl) {
+            errorEl = document.createElement('div');
+            errorEl.className = 'auth-field-error';
+            input.closest('.auth-field').appendChild(errorEl);
+        }
+        errorEl.textContent = message;
+    }
+
+    function clearFieldError(input) {
+        input.classList.remove('is-invalid');
+        const errorEl = input.closest('.auth-field').querySelector('.auth-field-error');
+        if (errorEl && errorEl.dataset.serverError !== 'true') errorEl.remove();
+    }
+
+    document.querySelectorAll('.auth-field-error').forEach(el => el.dataset.serverError = 'true');
+
+    [emailInput, passwordInput].forEach(input => {
+        if (!input) return;
+        input.addEventListener('input', function () { clearFieldError(this); });
+    });
+
+    // ==================== SUBMIT ====================
+    form.addEventListener('submit', function (e) {
+        let isValid = true;
+
+        if (!emailInput.value.trim()) {
+            showFieldError(emailInput, 'البريد الإلكتروني مطلوب');
+            isValid = false;
+        } else if (!validateEmail(emailInput.value.trim())) {
+            showFieldError(emailInput, 'البريد الإلكتروني غير صالح');
+            isValid = false;
+        }
+
+        if (!passwordInput.value) {
+            showFieldError(passwordInput, 'كلمة المرور مطلوبة');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            form.querySelector('.is-invalid')?.focus();
+            return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtnText.classList.add('d-none');
+        loginSpinner.classList.remove('d-none');
+    });
+})();
+</script>
 @endpush

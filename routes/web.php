@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ExcelModuleController;
 use App\Http\Controllers\Admin\ImportBatchController;
 use App\Http\Controllers\Admin\GlobalSearchController;
 use App\Http\Controllers\Admin\ModuleAnalyticsController;
+use App\Http\Controllers\Admin\ManufacturingReportController;
 use App\Http\Controllers\Admin\ProductionLineExcelController;
 use App\Http\Controllers\Admin\ProductionLineImportController;
 use App\Http\Controllers\Admin\ProductionLinePreviewController;
@@ -46,8 +47,32 @@ Route::middleware('auth')->group(function () {
         Route::put('/settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password');
         Route::put('/settings/preferences', [SettingsController::class, 'updatePreferences'])->name('settings.preferences');
 
+        /*
+        |--------------------------------------------------------------------------
+        | تقرير التصنيع الشامل (Manufacturing Report)
+        |--------------------------------------------------------------------------
+        */
+        Route::prefix('manufacturing-report')->name('manufacturing-report.')->group(function () {
+            Route::get('/', [ManufacturingReportController::class, 'index'])->name('index');
+            Route::get('/data', [ManufacturingReportController::class, 'data'])->name('data');
+            Route::get('/overview', [ManufacturingReportController::class, 'overview'])->name('overview');
+            Route::get('/machines', [ManufacturingReportController::class, 'machines'])->name('machines');
+            Route::get('/production-lines', [ManufacturingReportController::class, 'productionLines'])->name('production-lines');
+            Route::get('/inventory', [ManufacturingReportController::class, 'inventory'])->name('inventory');
+            Route::get('/hr', [ManufacturingReportController::class, 'hr'])->name('hr');
+            Route::get('/vehicles', [ManufacturingReportController::class, 'vehicles'])->name('vehicles');
+            Route::get('/capacity', [ManufacturingReportController::class, 'capacity'])->name('capacity');
+            Route::get('/warehouses', [ManufacturingReportController::class, 'warehouses'])->name('warehouses');
+            Route::get('/facilities', [ManufacturingReportController::class, 'facilities'])->name('facilities');
+            Route::get('/export-excel', [ManufacturingReportController::class, 'exportExcel'])->name('export-excel');
+            Route::get('/export-pdf', [ManufacturingReportController::class, 'exportPdf'])->name('export-pdf');
+        });
 
-        // Production Lines (legacy)
+        /*
+        |--------------------------------------------------------------------------
+        | Production Lines (legacy)
+        |--------------------------------------------------------------------------
+        */
         Route::get('/production-lines', [ProductionLineController::class, 'index'])
             ->name('production-lines.index');
         Route::post('/production-lines/upload-excel', [ProductionLineExcelController::class, 'store'])
@@ -77,32 +102,28 @@ Route::middleware('auth')->group(function () {
             Route::get('/upload', [ExcelModuleController::class, 'create'])->name('create');
 
             // ---------- Analytics (لازم قبل {module} الثابت) ----------
-            // dashboard عام لكل الموديولات
             Route::get('/analytics', [ModuleAnalyticsController::class, 'dashboard'])
                 ->name('analytics.index');
 
-            // صفحة HTML لعرض charts موديول معين
             Route::get('/{moduleCode}/analytics-page', [ModuleAnalyticsController::class, 'page'])
                 ->where('moduleCode', '[A-Za-z_]+')
                 ->name('analytics.page');
 
-            // JSON endpoint
             Route::get('/{moduleCode}/analytics', [ModuleAnalyticsController::class, 'show'])
                 ->where('moduleCode', '[A-Za-z_]+')
                 ->name('analytics.show');
 
-            // جداول مخصصة لكل موديول — لازم before {module} والـ analytics
+            // جداول مخصصة لكل موديول — لازم before {module}
             Route::get('/table/{moduleCode}', [ExcelModuleController::class, 'showTable'])
                 ->where('moduleCode', '[A-Za-z_]+')
                 ->name('table');
 
-            // ⚠️ whereNumber على id — يمنع /table/VEHICLES/analytics من التطابق هنا
             Route::get('/table/{moduleCode}/{id}', [ExcelModuleController::class, 'showTableRecord'])
                 ->where('moduleCode', '[A-Za-z_]+')
                 ->whereNumber('id')
                 ->name('table.record');
 
-            // POST = رفع الملف وتحليلها | GET = عرض المعاينة من الـ session (بعد الرفع أو عند Refresh)
+            // POST = رفع الملف وتحليلها | GET = عرض المعاينة
             Route::match(['get', 'post'], '/preview', [ExcelModuleController::class, 'preview'])->name('preview');
             Route::post('/import', [ExcelModuleController::class, 'import'])->name('import');
 
