@@ -65,7 +65,7 @@
 
             {{-- Manufacturing Report --}}
             <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.manufacturing-report.*') ? 'active' : '' }}"
+                <a class="nav-link {{ request()->routeIs('admin.manufacturing-report.index') ? 'active' : '' }}"
                    href="{{ route('admin.manufacturing-report.index') }}"
                    data-tooltip="تقرير التصنيع الشامل">
                     <span class="nav-icon"><i class="bi bi-gear-wide-connected"></i></span>
