@@ -63,22 +63,7 @@
                 </a>
             </li>
 
-            
-            <li class="nav-item">
-                        <?php if(Route::has('admin.manufacturing-report.index')): ?>
-
-                <a class="nav-link <?php echo e(request()->routeIs('admin.manufacturing-report.index') ? 'active' : ''); ?>"
-                   href="<?php echo e(route('admin.manufacturing-report.index')); ?>"
-                   data-tooltip="تقرير التصنيع الشامل">
-                    <span class="nav-icon"><i class="bi bi-gear-wide-connected"></i></span>
-                    <span class="nav-text">تقرير التصنيع الشامل</span>
-                    <?php if(request()->routeIs('admin.manufacturing-report.index')): ?>
-                        <span class="nav-active-dot" aria-hidden="true"></span>
-                    <?php endif; ?>
-                </a>
-                <?php endif; ?>
-
-            </li>
+          
 
   
             
@@ -204,7 +189,7 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<?php if (! $__env->hasRenderedOnce('0d58d605-353a-4f0b-8ed8-e643b2007908')): $__env->markAsRenderedOnce('0d58d605-353a-4f0b-8ed8-e643b2007908'); ?>
+<?php if (! $__env->hasRenderedOnce('9d7fe680-1412-4b69-a121-563eaf106418')): $__env->markAsRenderedOnce('9d7fe680-1412-4b69-a121-563eaf106418'); ?>
 <?php $__env->startPush('scripts'); ?>
 <script>
 (function () {
