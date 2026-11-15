@@ -9,17 +9,21 @@
 <li class="breadcrumb-item active">معاينة</li>
 @endsection
 
-
-
 @section('content')
 @php
-    $headers = $preview['headers'] ?? [];
-    $previewRows = $preview['preview_rows'] ?? [];
-    $totalRows = $preview['total_rows'] ?? 0;
-    $totalCols = count($headers);
-    $shownCols = array_slice($headers, 0, 10);
+    // مفاتيح TypedExcelImporter::preview() — مع fallbacks آمنة
+    $headers       = $preview['headers'] ?? [];
+    $previewRows   = $preview['rows'] ?? $preview['preview_rows'] ?? [];
+    $totalRows     = $preview['total_rows'] ?? 0;
+    $totalCols     = count($headers);
+    $moduleCode    = $preview['module_code'] ?? null;
+    $moduleNameAr  = $preview['module_name_ar'] ?? $preview['module_name'] ?? '—';
+    $tableName     = $preview['table'] ?? $preview['table_name'] ?? '';
+    $templateVer   = $preview['template_version'] ?? '—';
+
+    $shownCols     = array_slice($headers, 0, 10);
     $hiddenColsCount = max(0, $totalCols - 10);
-    $sampleCount = count($previewRows);
+    $sampleCount   = count($previewRows);
 @endphp
 
 <div class="ip-page" dir="rtl">
@@ -40,8 +44,8 @@
             <p class="ip-hero-sub">
                 <i class="bi bi-info-circle"></i>
                 راجع البيانات أدناه قبل تأكيد الاستيراد
-                @if(!empty($preview['module_code']))
-                    · <code>{{ $preview['module_code'] }}</code>
+                @if($moduleCode)
+                    · <code>{{ $moduleCode }}</code>
                 @endif
             </p>
         </div>
@@ -77,10 +81,8 @@
             </div>
             <div class="ip-kpi-body">
                 <div class="ip-kpi-label">الموديول</div>
-                <div class="ip-kpi-value" title="{{ $preview['module_name_ar'] ?? '—' }}">
-                    {{ $preview['module_name_ar'] ?? '—' }}
-                </div>
-                <div class="ip-kpi-sub">{{ $preview['table'] ?? '' }}</div>
+                <div class="ip-kpi-value" title="{{ $moduleNameAr }}">{{ $moduleNameAr }}</div>
+                <div class="ip-kpi-sub">{{ $tableName }}</div>
             </div>
         </div>
         <div class="ip-kpi">
@@ -107,15 +109,13 @@
             </div>
             <div class="ip-kpi-body">
                 <div class="ip-kpi-label">إصدار القالب</div>
-                <div class="ip-kpi-value" style="font-size:.9rem">
-                    {{ $preview['template_version'] ?? '—' }}
-                </div>
+                <div class="ip-kpi-value" style="font-size:.9rem">{{ $templateVer }}</div>
             </div>
         </div>
     </div>
 
     {{-- ============================================================
-         ALERT (ملاحظة)
+         ALERT
          ============================================================ --}}
     <div class="ip-alert">
         <div class="ip-alert-icon">
@@ -275,19 +275,17 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const form = document.getElementById('ipImportForm');
-    const submitBtn = document.getElementById('ipSubmitBtn');
-    const replaceCheckbox = document.getElementById('replace');
+    const form        = document.getElementById('ipImportForm');
+    const submitBtn   = document.getElementById('ipSubmitBtn');
+    const replaceBox  = document.getElementById('replace');
 
     if (!form || !submitBtn) return;
 
-    // ==================== CONFIRM ON SUBMIT ====================
     form.addEventListener('submit', function (e) {
-        // Build confirmation message
         let message = 'هل تريد تأكيد الاستيراد؟\n\n';
         message += '• عدد الصفوف: {{ number_format($totalRows) }}\n';
         message += '• عدد الأعمدة: {{ $totalCols }}\n';
-        if (replaceCheckbox && replaceCheckbox.checked) {
+        if (replaceBox && replaceBox.checked) {
             message += '\n⚠️ سيتم استبدال البيانات القديمة لهذا الموديول.';
         }
         message += '\n\nهل تريد المتابعة؟';
@@ -297,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Disable button + show loading
+        // نترك الـ form يرسل عادي (form submission) — الـ Controller سيرد بـ redirect
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> جاري الاستيراد...';
     });

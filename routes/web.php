@@ -97,49 +97,56 @@ Route::middleware('auth')->group(function () {
         */
         Route::prefix('excel-modules')->name('excel-modules.')->group(function () {
 
+            // ===== Dashboard & Index (static) =====
             Route::get('/dashboard', [ExcelModuleController::class, 'dashboard'])->name('dashboard');
             Route::get('/', [ExcelModuleController::class, 'index'])->name('index');
+
+            // ===== Upload form (GET) =====
             Route::get('/upload', [ExcelModuleController::class, 'create'])->name('create');
 
-            // ---------- Analytics (لازم قبل {module} الثابت) ----------
+            // ===== Preview: POST = upload+validate, GET = show preview =====
+            // فصلناهم لاسمين مختلفين لتجنب اللبس
+            Route::post('/preview', [ExcelModuleController::class, 'preview'])
+                ->name('preview');
+            Route::get('/preview', [ExcelModuleController::class, 'previewShow'])
+                ->name('preview.show');
+
+            // ===== Import confirm (POST) =====
+            Route::post('/import', [ExcelModuleController::class, 'import'])
+                ->name('import');
+
+            // ===== Analytics (static before {module}) =====
             Route::get('/analytics', [ModuleAnalyticsController::class, 'dashboard'])
                 ->name('analytics.index');
-
             Route::get('/{moduleCode}/analytics-page', [ModuleAnalyticsController::class, 'page'])
                 ->where('moduleCode', '[A-Za-z_]+')
                 ->name('analytics.page');
-
             Route::get('/{moduleCode}/analytics', [ModuleAnalyticsController::class, 'show'])
                 ->where('moduleCode', '[A-Za-z_]+')
                 ->name('analytics.show');
 
-            // جداول مخصصة لكل موديول — لازم before {module}
+            // ===== Custom tables per module (before {module}) =====
             Route::get('/table/{moduleCode}', [ExcelModuleController::class, 'showTable'])
                 ->where('moduleCode', '[A-Za-z_]+')
                 ->name('table');
-
             Route::get('/table/{moduleCode}/{id}', [ExcelModuleController::class, 'showTableRecord'])
                 ->where('moduleCode', '[A-Za-z_]+')
                 ->whereNumber('id')
                 ->name('table.record');
 
-            // POST = رفع الملف وتحليلها | GET = عرض المعاينة
-            Route::match(['get', 'post'], '/preview', [ExcelModuleController::class, 'preview'])->name('preview');
-            Route::post('/import', [ExcelModuleController::class, 'import'])->name('import');
-
+            // ===== Export / records / destroy (must be before {module}) =====
             Route::get('/{module}/export', [ExcelModuleController::class, 'export'])
                 ->whereNumber('module')
                 ->name('export');
-
             Route::get('/{module}/records/{record}', [ExcelModuleController::class, 'showRecord'])
                 ->whereNumber('module')
                 ->whereNumber('record')
                 ->name('records.show');
-
             Route::delete('/{module}', [ExcelModuleController::class, 'destroy'])
                 ->whereNumber('module')
                 ->name('destroy');
 
+            // ===== Show module records (last: {module}) =====
             Route::get('/{module}', [ExcelModuleController::class, 'show'])
                 ->whereNumber('module')
                 ->name('show');

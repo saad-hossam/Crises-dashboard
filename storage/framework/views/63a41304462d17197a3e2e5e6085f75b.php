@@ -65,17 +65,22 @@
 
             
             <li class="nav-item">
-                <a class="nav-link <?php echo e(request()->routeIs('admin.manufacturing-report.*') ? 'active' : ''); ?>"
+                        <?php if(Route::has('admin.manufacturing-report.index')): ?>
+
+                <a class="nav-link <?php echo e(request()->routeIs('admin.manufacturing-report.index') ? 'active' : ''); ?>"
                    href="<?php echo e(route('admin.manufacturing-report.index')); ?>"
                    data-tooltip="تقرير التصنيع الشامل">
                     <span class="nav-icon"><i class="bi bi-gear-wide-connected"></i></span>
                     <span class="nav-text">تقرير التصنيع الشامل</span>
-                    <?php if(request()->routeIs('admin.manufacturing-report.*')): ?>
+                    <?php if(request()->routeIs('admin.manufacturing-report.index')): ?>
                         <span class="nav-active-dot" aria-hidden="true"></span>
                     <?php endif; ?>
                 </a>
+                <?php endif; ?>
+
             </li>
 
+  
             
             <?php if(auth()->user()->can('users.view')
               || auth()->user()->can('roles.view')
@@ -199,7 +204,7 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<?php if (! $__env->hasRenderedOnce('e47d4f8e-d27f-4741-a231-dcaa5bc9d327')): $__env->markAsRenderedOnce('e47d4f8e-d27f-4741-a231-dcaa5bc9d327'); ?>
+<?php if (! $__env->hasRenderedOnce('0d58d605-353a-4f0b-8ed8-e643b2007908')): $__env->markAsRenderedOnce('0d58d605-353a-4f0b-8ed8-e643b2007908'); ?>
 <?php $__env->startPush('scripts'); ?>
 <script>
 (function () {
