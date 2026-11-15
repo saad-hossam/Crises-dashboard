@@ -27,4 +27,6 @@ return [
     'never_imported' => 'Not imported yet',
     'view_data' => 'View data',
     'click_row' => 'Click a row to view details',
+
+    'no_value' => '—',
 ];

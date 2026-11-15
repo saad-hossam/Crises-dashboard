@@ -24,32 +24,22 @@
                 </li>
             @endcan
 
-           
-
-            @can('data.view')
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('admin.data.*') ? 'active' : '' }}"
-                       href="{{ route('admin.dashboard') }}"
-                       data-tooltip="{{ __('navigation.data_management') }}">
-                        <i class="bi bi-database"></i>
-                        <span>{{ __('navigation.data_management') }}</span>
+             <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('admin.excel-modules.analytics.index') ? 'active' : '' }}"
+                       href="{{ route('admin.excel-modules.analytics.index') }}"
+                       data-tooltip="{{ __('navigation.charts') }}">
+<i class="bi bi-bar-chart"></i>                        <span>{{ __('navigation.charts') }}</span>
+                        @if (request()->routeIs('admin.excel-modules.analytics.index'))
+                            <span class="nav-active-dot" aria-hidden="true"></span>
+                        @endif
                     </a>
                 </li>
-            @endcan
+
+           
 
 
-            {{-- Dynamic Excel Modules --}}
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.excel-modules.*') ? 'active' : '' }}"
-                   href="{{ route('admin.excel-modules.dashboard') }}"
-                   data-tooltip="{{ __('navigation.excel_data') }}">
-                    <i class="bi bi-file-earmark-spreadsheet"></i>
-                    <span>{{ __('navigation.excel_data') }}</span>
-                    @if (request()->routeIs('admin.excel-modules.*'))
-                        <span class="nav-active-dot" aria-hidden="true"></span>
-                    @endif
-                </a>
-            </li>
+
+         
 
             {{-- ============ Management section ============ --}}
             @if (auth()->user()->can('users.view')
@@ -80,7 +70,7 @@
                            href="{{ route('admin.roles.index') }}"
                            data-tooltip="{{ __('navigation.roles_permissions') }}">
                             <i class="bi bi-shield-lock"></i>
-                            <span>{{ __('navigation.roles_permissions') }}</span>
+                            <span>{{ __('navigation.roles') }}</span>
                             @if (request()->routeIs('admin.roles.*'))
                                 <span class="nav-active-dot" aria-hidden="true"></span>
                             @endif
@@ -127,7 +117,7 @@
                 @can('settings.manage')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('admin.settings.*') ? 'active' : '' }}"
-                           href="{{ route('admin.dashboard') }}"
+                           href="{{ route('admin.settings.index') }}"
                            data-tooltip="{{ __('navigation.settings') }}">
                             <i class="bi bi-gear"></i>
                             <span>{{ __('navigation.settings') }}</span>
@@ -135,16 +125,7 @@
                     </li>
                 @endcan
 
-                @can('activity_logs.view')
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('admin.activity-logs.*') ? 'active' : '' }}"
-                           href="{{ route('admin.dashboard') }}"
-                           data-tooltip="{{ __('navigation.activity_logs') }}">
-                            <i class="bi bi-clock-history"></i>
-                            <span>{{ __('navigation.activity_logs') }}</span>
-                        </a>
-                    </li>
-                @endcan
+               
             @endif
 
         </ul>

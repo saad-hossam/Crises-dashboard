@@ -8,6 +8,32 @@
 <li class="breadcrumb-item active">{{ $config['name_ar'] }}</li>
 @endsection
 
+@php
+    /* =========================================================
+       بناء خريطة التسميات العربية من $config['columns']
+       يدعم الشكلين:
+         A) ['الاسم العربي' => 'db_col', ...]
+         B) [0 => 'db_col', 1 => 'db_col2', ...]
+    ========================================================= */
+    $rawColumns = $config['columns'] ?? [];
+    $labelMap = [];
+
+    foreach ($rawColumns as $k => $v) {
+        if (is_string($k) && is_string($v)) {
+            // shape A: Arabic label => English column name
+            $labelMap[$v] = $k;
+        } elseif (is_string($v)) {
+            // shape B: plain list of English column names
+            $labelMap[$v] = str_replace('_', ' ', $v);
+        }
+    }
+
+    // helper: label for a given column
+    $colLabel = function (string $col) use ($labelMap): string {
+        return $labelMap[$col] ?? str_replace('_', ' ', $col);
+    };
+@endphp
+
 @push('styles')
 <style>
     /* رفع بطاقة الفلترة فوق بطاقة الجدول حتى لا يُقصّ الـ dropdown */
@@ -183,57 +209,34 @@
         .ao-mobile-field { grid-template-columns: 1fr; }
         .ao-mobile-value { text-align: start; }
     }
-
 </style>
 @endpush
 
 @section('content')
 
-
-{{-- Module statistics --}}
-@if(!empty($moduleStats))
+{{-- 4 charts per module (dynamic from config) --}}
+@php
+    $charts = $moduleCharts ?? [];
+    while (count($charts) < 4) {
+        $charts[] = ['id' => 'modChart'.count($charts), 'type' => 'bar', 'title' => '—', 'labels' => [], 'data' => []];
+    }
+    $chartIcons = ['bi-pie-chart-fill', 'bi-bar-chart-fill', 'bi-donut', 'bi-graph-up'];
+@endphp
 <div class="row g-3 mb-4">
-    @foreach($moduleStats as $stat)
-        <div class="col-6 col-md-3">
-            <div class="kpi-card h-100">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="kpi-label">{{ $stat['label'] }}</div>
-                        <div class="kpi-value">{{ number_format($stat['value']) }}</div>
-                    </div>
-                    <div class="kpi-icon text-{{ $stat['color'] ?? 'primary' }}">
-                        <i class="bi {{ $stat['icon'] ?? 'bi-bar-chart' }}"></i>
-                    </div>
-                </div>
+    @foreach(array_slice($charts, 0, 4) as $i => $ch)
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="panel-card h-100">
+            <div class="panel-head">
+                <i class="bi {{ $chartIcons[$i % 4] }} text-primary me-1"></i>
+                {{ $ch['title'] ?? '—' }}
+            </div>
+            <div class="panel-body">
+                <div class="chart-box chart-box-sm"><canvas id="{{ $ch['id'] }}"></canvas></div>
             </div>
         </div>
+    </div>
     @endforeach
 </div>
-@endif
-
-{{-- 3 charts per module --}}
-<div class="row g-3 mb-4">
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-pie-chart-fill text-primary me-1"></i> حالة التشغيل</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modStatusChart"></canvas></div></div>
-        </div>
-    </div>
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-geo-alt-fill text-primary me-1"></i> المحافظات</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modGovChart"></canvas></div></div>
-        </div>
-    </div>
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-shield-check text-primary me-1"></i> الجاهزية</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modReadyChart"></canvas></div></div>
-        </div>
-    </div>
-</div>
-
-
 
 {{-- Header --}}
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
@@ -344,8 +347,9 @@
                     <tr>
                         <th class="ao-col-sticky ao-col-id">#</th>
                         @foreach($visibleCols as $i => $col)
-                            <th class="ao-col {{ $i >= 3 ? 'ao-col-lg-only' : '' }} {{ $i >= 5 ? 'ao-col-xl-only' : '' }}">
-                                {{ str_replace('_', ' ', $col) }}
+                            <th class="ao-col {{ $i >= 3 ? 'ao-col-lg-only' : '' }} {{ $i >= 5 ? 'ao-col-xl-only' : '' }}"
+                                title="{{ $colLabel($col) }}">
+                                {{ $colLabel($col) }}
                             </th>
                         @endforeach
                         <th class="ao-col-actions text-center">تفاصيل</th>
@@ -358,8 +362,9 @@
                         <td class="ao-col-sticky ao-col-id text-muted">{{ $record->id }}</td>
                         @foreach($visibleCols as $i => $col)
                             @php $value = (string) ($record->{$col} ?? '—'); @endphp
-                            <td class="ao-col {{ $i >= 3 ? 'ao-col-lg-only' : '' }} {{ $i >= 5 ? 'ao-col-xl-only' : '' }}">
-                                <span class="ao-cell" title="{{ $value }}">{{ \Illuminate\Support\Str::limit($value, 36) }}</span>
+                            <td class="ao-col {{ $i >= 3 ? 'ao-col-lg-only' : '' }} {{ $i >= 5 ? 'ao-col-xl-only' : '' }}"
+                                title="{{ $colLabel($col) }}: {{ $value }}">
+                                <span class="ao-cell">{{ \Illuminate\Support\Str::limit($value, 36) }}</span>
                             </td>
                         @endforeach
                         <td class="ao-col-actions text-center" onclick="event.stopPropagation()">
@@ -395,7 +400,7 @@
                     @foreach(array_slice($visibleCols, 0, 4) as $col)
                         @php $value = (string) ($record->{$col} ?? '—'); @endphp
                         <div class="ao-mobile-field">
-                            <span class="ao-mobile-label">{{ str_replace('_', ' ', $col) }}</span>
+                            <span class="ao-mobile-label">{{ $colLabel($col) }}</span>
                             <span class="ao-mobile-value">{{ \Illuminate\Support\Str::limit($value, 48) }}</span>
                         </div>
                     @endforeach
@@ -583,10 +588,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  draw('modStatusChart', 'doughnut', @json($chartStatus['labels'] ?? []), @json($chartStatus['data'] ?? []));
-  draw('modGovChart', 'bar', @json($chartGov['labels'] ?? []), @json($chartGov['data'] ?? []));
-  draw('modReadyChart', 'doughnut', @json($chartReadiness['labels'] ?? []), @json($chartReadiness['data'] ?? []));
-  
+  const moduleCharts = @json($moduleCharts ?? []);
+  moduleCharts.forEach(function (ch) {
+    draw(ch.id, ch.type || 'bar', ch.labels || [], ch.data || []);
+  });
+
 });
 </script>
 @endpush

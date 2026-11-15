@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', __('roles.title'))
-@section('page_title', __('roles.title'))
+@section('title', __('roles.roles'))
+@section('page_title', __('roles.roles'))
 
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>{{ __('roles.title') }}</h2>
+    <h2>{{ __('roles.roles') }}</h2>
     <a href="{{ route('admin.roles.create') }}" class="btn btn-primary">
         <i class="bi bi-plus-lg"></i> {{ __('roles.create') }}
     </a>

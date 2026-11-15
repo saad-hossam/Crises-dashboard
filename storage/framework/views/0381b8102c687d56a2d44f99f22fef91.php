@@ -10,12 +10,11 @@
         <span class="footer-sep">·</span>
         <span class="footer-version">
             <span class="footer-pulse" aria-hidden="true"></span>
-            <?php echo e(__('common.version')); ?> 1.0.0
         </span>
     </div>
 </footer>
 
-<?php if (! $__env->hasRenderedOnce('7e88af21-37ee-403c-8a60-de5592fdf05e')): $__env->markAsRenderedOnce('7e88af21-37ee-403c-8a60-de5592fdf05e'); ?>
+<?php if (! $__env->hasRenderedOnce('f81a26ac-e531-45f8-95a3-f9ded8d02ac5')): $__env->markAsRenderedOnce('f81a26ac-e531-45f8-95a3-f9ded8d02ac5'); ?>
 <?php $__env->startPush('scripts'); ?>
 <script>
 (function () {

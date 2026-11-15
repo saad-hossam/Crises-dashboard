@@ -1,6 +1,7 @@
 <?php
 return [
     'dashboard' => 'Dashboard',
+    'charts'=>'Data Analysis',
     'data_management' => 'Data management',
     'management' => 'Management',
     'users' => 'Users',

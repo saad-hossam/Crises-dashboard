@@ -27,4 +27,6 @@ return [
     'never_imported' => 'لم يُستورد بعد',
     'view_data' => 'عرض البيانات',
     'click_row' => 'اضغط على صف لعرض التفاصيل',
+
+    'no_value' => '—',
 ];

@@ -6,6 +6,32 @@
 <li class="breadcrumb-item active"><?php echo e($config['name_ar']); ?></li>
 <?php $__env->stopSection(); ?>
 
+<?php
+    /* =========================================================
+       بناء خريطة التسميات العربية من $config['columns']
+       يدعم الشكلين:
+         A) ['الاسم العربي' => 'db_col', ...]
+         B) [0 => 'db_col', 1 => 'db_col2', ...]
+    ========================================================= */
+    $rawColumns = $config['columns'] ?? [];
+    $labelMap = [];
+
+    foreach ($rawColumns as $k => $v) {
+        if (is_string($k) && is_string($v)) {
+            // shape A: Arabic label => English column name
+            $labelMap[$v] = $k;
+        } elseif (is_string($v)) {
+            // shape B: plain list of English column names
+            $labelMap[$v] = str_replace('_', ' ', $v);
+        }
+    }
+
+    // helper: label for a given column
+    $colLabel = function (string $col) use ($labelMap): string {
+        return $labelMap[$col] ?? str_replace('_', ' ', $col);
+    };
+?>
+
 <?php $__env->startPush('styles'); ?>
 <style>
     /* رفع بطاقة الفلترة فوق بطاقة الجدول حتى لا يُقصّ الـ dropdown */
@@ -181,57 +207,35 @@
         .ao-mobile-field { grid-template-columns: 1fr; }
         .ao-mobile-value { text-align: start; }
     }
-
 </style>
 <?php $__env->stopPush(); ?>
 
 <?php $__env->startSection('content'); ?>
 
 
-
-<?php if(!empty($moduleStats)): ?>
+<?php
+    $charts = $moduleCharts ?? [];
+    while (count($charts) < 4) {
+        $charts[] = ['id' => 'modChart'.count($charts), 'type' => 'bar', 'title' => '—', 'labels' => [], 'data' => []];
+    }
+    $chartIcons = ['bi-pie-chart-fill', 'bi-bar-chart-fill', 'bi-donut', 'bi-graph-up'];
+?>
 <div class="row g-3 mb-4">
-    <?php $__currentLoopData = $moduleStats; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $stat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-        <div class="col-6 col-md-3">
-            <div class="kpi-card h-100">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="kpi-label"><?php echo e($stat['label']); ?></div>
-                        <div class="kpi-value"><?php echo e(number_format($stat['value'])); ?></div>
-                    </div>
-                    <div class="kpi-icon text-<?php echo e($stat['color'] ?? 'primary'); ?>">
-                        <i class="bi <?php echo e($stat['icon'] ?? 'bi-bar-chart'); ?>"></i>
-                    </div>
-                </div>
+    <?php $__currentLoopData = array_slice($charts, 0, 4); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $ch): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="panel-card h-100">
+            <div class="panel-head">
+                <i class="bi <?php echo e($chartIcons[$i % 4]); ?> text-primary me-1"></i>
+                <?php echo e($ch['title'] ?? '—'); ?>
+
+            </div>
+            <div class="panel-body">
+                <div class="chart-box chart-box-sm"><canvas id="<?php echo e($ch['id']); ?>"></canvas></div>
             </div>
         </div>
+    </div>
     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 </div>
-<?php endif; ?>
-
-
-<div class="row g-3 mb-4">
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-pie-chart-fill text-primary me-1"></i> حالة التشغيل</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modStatusChart"></canvas></div></div>
-        </div>
-    </div>
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-geo-alt-fill text-primary me-1"></i> المحافظات</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modGovChart"></canvas></div></div>
-        </div>
-    </div>
-    <div class="col-12 col-md-4">
-        <div class="panel-card h-100">
-            <div class="panel-head"><i class="bi bi-shield-check text-primary me-1"></i> الجاهزية</div>
-            <div class="panel-body"><div class="chart-box chart-box-sm"><canvas id="modReadyChart"></canvas></div></div>
-        </div>
-    </div>
-</div>
-
-
 
 
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
@@ -344,8 +348,9 @@
                     <tr>
                         <th class="ao-col-sticky ao-col-id">#</th>
                         <?php $__currentLoopData = $visibleCols; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $col): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <th class="ao-col <?php echo e($i >= 3 ? 'ao-col-lg-only' : ''); ?> <?php echo e($i >= 5 ? 'ao-col-xl-only' : ''); ?>">
-                                <?php echo e(str_replace('_', ' ', $col)); ?>
+                            <th class="ao-col <?php echo e($i >= 3 ? 'ao-col-lg-only' : ''); ?> <?php echo e($i >= 5 ? 'ao-col-xl-only' : ''); ?>"
+                                title="<?php echo e($colLabel($col)); ?>">
+                                <?php echo e($colLabel($col)); ?>
 
                             </th>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -359,8 +364,9 @@
                         <td class="ao-col-sticky ao-col-id text-muted"><?php echo e($record->id); ?></td>
                         <?php $__currentLoopData = $visibleCols; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $col): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <?php $value = (string) ($record->{$col} ?? '—'); ?>
-                            <td class="ao-col <?php echo e($i >= 3 ? 'ao-col-lg-only' : ''); ?> <?php echo e($i >= 5 ? 'ao-col-xl-only' : ''); ?>">
-                                <span class="ao-cell" title="<?php echo e($value); ?>"><?php echo e(\Illuminate\Support\Str::limit($value, 36)); ?></span>
+                            <td class="ao-col <?php echo e($i >= 3 ? 'ao-col-lg-only' : ''); ?> <?php echo e($i >= 5 ? 'ao-col-xl-only' : ''); ?>"
+                                title="<?php echo e($colLabel($col)); ?>: <?php echo e($value); ?>">
+                                <span class="ao-cell"><?php echo e(\Illuminate\Support\Str::limit($value, 36)); ?></span>
                             </td>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         <td class="ao-col-actions text-center" onclick="event.stopPropagation()">
@@ -396,7 +402,7 @@
                     <?php $__currentLoopData = array_slice($visibleCols, 0, 4); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $col): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <?php $value = (string) ($record->{$col} ?? '—'); ?>
                         <div class="ao-mobile-field">
-                            <span class="ao-mobile-label"><?php echo e(str_replace('_', ' ', $col)); ?></span>
+                            <span class="ao-mobile-label"><?php echo e($colLabel($col)); ?></span>
                             <span class="ao-mobile-value"><?php echo e(\Illuminate\Support\Str::limit($value, 48)); ?></span>
                         </div>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -587,12 +593,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  draw('modStatusChart', 'doughnut', <?php echo json_encode($chartStatus['labels'] ?? [], 15, 512) ?>, <?php echo json_encode($chartStatus['data'] ?? [], 15, 512) ?>);
-  draw('modGovChart', 'bar', <?php echo json_encode($chartGov['labels'] ?? [], 15, 512) ?>, <?php echo json_encode($chartGov['data'] ?? [], 15, 512) ?>);
-  draw('modReadyChart', 'doughnut', <?php echo json_encode($chartReadiness['labels'] ?? [], 15, 512) ?>, <?php echo json_encode($chartReadiness['data'] ?? [], 15, 512) ?>);
-  
+  const moduleCharts = <?php echo json_encode($moduleCharts ?? [], 15, 512) ?>;
+  moduleCharts.forEach(function (ch) {
+    draw(ch.id, ch.type || 'bar', ch.labels || [], ch.data || []);
+  });
+
 });
 </script>
 <?php $__env->stopPush(); ?>
-
 <?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\pc\Music\Crises-dashboard\resources\views/admin/excel-modules/table.blade.php ENDPATH**/ ?>
