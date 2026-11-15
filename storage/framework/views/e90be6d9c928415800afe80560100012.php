@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'معاينة الاستيراد'); ?>
 <?php $__env->startSection('page_title', 'معاينة الاستيراد'); ?>
 
@@ -11,19 +9,19 @@
 
 <?php $__env->startSection('content'); ?>
 <?php
-    // مفاتيح TypedExcelImporter::preview() — مع fallbacks آمنة
     $headers       = $preview['headers'] ?? [];
     $previewRows   = $preview['rows'] ?? $preview['preview_rows'] ?? [];
-    $totalRows     = $preview['total_rows'] ?? 0;
+    $totalRows     = (int) ($preview['total_rows'] ?? 0);
     $totalCols     = count($headers);
     $moduleCode    = $preview['module_code'] ?? null;
     $moduleNameAr  = $preview['module_name_ar'] ?? $preview['module_name'] ?? '—';
     $tableName     = $preview['table'] ?? $preview['table_name'] ?? '';
     $templateVer   = $preview['template_version'] ?? '—';
+    $isInferred    = (bool) ($preview['_inferred'] ?? false);
 
-    $shownCols     = array_slice($headers, 0, 10);
+    $shownCols       = array_slice($headers, 0, 10);
     $hiddenColsCount = max(0, $totalCols - 10);
-    $sampleCount   = count($previewRows);
+    $sampleCount     = count($previewRows);
 ?>
 
 <div class="ip-page" dir="rtl">
@@ -49,6 +47,20 @@
             </p>
         </div>
     </div>
+
+    
+    <?php if($isInferred): ?>
+        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div>
+                <strong>تنبيه:</strong>
+                لم يتم العثور على شيت <code>_System</code> في الملف،
+                وتم استنتاج <code>ModuleCode</code> من اسم الملف:
+                <code><?php echo e($moduleCode); ?></code>.
+                راجع البيانات بعناية قبل التأكيد.
+            </div>
+        </div>
+    <?php endif; ?>
 
     
     <div class="ip-steps">
@@ -122,6 +134,12 @@
                 <?php if($hiddenColsCount > 0): ?>
                     · يتم عرض أول 10 أعمدة فقط، <strong><?php echo e($hiddenColsCount); ?></strong> عمود إضافي سيتم استيراده أيضاً.
                 <?php endif; ?>
+                <?php if($totalRows > 5000): ?>
+                    <br><small class="text-warning">
+                        <i class="bi bi-clock-history"></i>
+                        حجم كبير — قد يستغرق الاستيراد حتى دقيقة. لا تغلق الصفحة.
+                    </small>
+                <?php endif; ?>
             </p>
         </div>
     </div>
@@ -182,9 +200,9 @@
                                 <td class="col-row-num"><?php echo e($idx + 1); ?></td>
                                 <?php $__currentLoopData = $shownCols; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $i => $h): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <?php
-                                        $val = $row[$i] ?? null;
-                                        $isArr = is_array($val);
-                                        $strVal = $isArr ? json_encode($val, JSON_UNESCAPED_UNICODE) : (string)($val ?? '');
+                                        $val     = $row[$i] ?? null;
+                                        $isArr   = is_array($val);
+                                        $strVal  = $isArr ? json_encode($val, JSON_UNESCAPED_UNICODE) : (string) ($val ?? '');
                                         $isEmpty = !$isArr && ($val === null || $val === '');
                                     ?>
                                     <td title="<?php echo e($strVal); ?>">
@@ -227,8 +245,10 @@
     <?php endif; ?>
 
     
-    <form method="POST" action="<?php echo e(route('admin.excel-modules.import')); ?>" id="ipImportForm">
+    <form method="POST" action="/admin/excel-modules/import" id="ipImportForm">
         <?php echo csrf_field(); ?>
+        <input type="hidden" name="import_ticket" value="<?php echo e($importTicket ?? session('excel_import_ticket')); ?>">
+        <input type="hidden" name="import_payload" value="<?php echo e($importPayload ?? session('excel_import_payload')); ?>">
         <div class="ip-action-card">
             <div class="ip-action-card-inner">
                 <div class="ip-checkbox">
@@ -263,9 +283,9 @@
 <?php $__env->startPush('scripts'); ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const form        = document.getElementById('ipImportForm');
-    const submitBtn   = document.getElementById('ipSubmitBtn');
-    const replaceBox  = document.getElementById('replace');
+    const form       = document.getElementById('ipImportForm');
+    const submitBtn  = document.getElementById('ipSubmitBtn');
+    const replaceBox = document.getElementById('replace');
 
     if (!form || !submitBtn) return;
 
@@ -283,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // نترك الـ form يرسل عادي (form submission) — الـ Controller سيرد بـ redirect
+        // تعطيل الزر فقط — بدون أي overlay أو loader
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> جاري الاستيراد...';
     });

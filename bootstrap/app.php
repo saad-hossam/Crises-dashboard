@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Global web middleware
         $middleware->web(append: [
             SetLocale::class,
+            \App\Http\Middleware\ForceRequestRootUrl::class,
         ]);
 
         // Spatie permission aliases for route-level checks

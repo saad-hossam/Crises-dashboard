@@ -472,12 +472,38 @@
     const moduleCode = <?php echo json_encode($moduleCode, 15, 512) ?>;
     const analyticsUrl = `/admin/excel-modules/${moduleCode}/analytics`;
 
-    // ✅ Palette جديدة — ألوان فاتحة وحيوية بدون أسود/رمادي غامق
-    const palette = [
-        '#E87524', '#FF9A56', '#5B9BD5', '#7EC8E3', '#10b981',
-        '#34D399', '#f59e0b', '#FBBF24', '#A78BFA', '#EC4899',
-        '#06b6d4', '#22D3EE', '#84cc16', '#F97316', '#F43F5E',
-    ];
+    // ==================== ألوان فريدة — Golden Angle ====================
+    // توزّع الألوان على عجلة HSL بزاوية 137.508° (توزيع فيبوناتشي الذهبي)
+    // يضمن أن كل لون مختلف بصريًا حتى مع 50+ عنصرًا
+    function generateDistinctColors(count) {
+        const colors = [];
+        const goldenAngle = 137.508;
+        for (let i = 0; i < count; i++) {
+            const hue = (i * goldenAngle) % 360;
+            const saturation = 65 + (i % 3) * 8;   // 65% – 81%
+            const lightness  = 50 + (i % 4) * 5;   // 50% – 65%
+            colors.push(`hsl(${hue.toFixed(1)}, ${saturation}%, ${lightness}%)`);
+        }
+        return colors;
+    }
+
+    // نسخة أفتح (للحدود) — للحفاظ على التباين
+    function lightenColor(hsl, amount = 20) {
+        const m = hsl.match(/hsl\(([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%\)/);
+        if (!m) return hsl;
+        const [, h, s, l] = m;
+        const nl = Math.min(90, parseFloat(l) + amount);
+        return `hsl(${h}, ${s}%, ${nl}%)`;
+    }
+
+    // نسخة أغمق — للحدود في الوضع الفاتح
+    function darkenColor(hsl, amount = 12) {
+        const m = hsl.match(/hsl\(([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%\)/);
+        if (!m) return hsl;
+        const [, h, s, l] = m;
+        const nl = Math.max(20, parseFloat(l) - amount);
+        return `hsl(${h}, ${s}%, ${nl}%)`;
+    }
 
     const charts = {};
     let mapInstance = null;
@@ -526,12 +552,12 @@
             wrap.innerHTML = '<div class="col-12 text-muted text-center py-3">لا توجد مؤشرات</div>';
             return;
         }
-        const kpiColors = ['#E87524', '#17365D', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'];
+        // ✅ ألوان KPI فريدة أيضًا
+        const kpiColors = generateDistinctColors(kpis.length);
         kpis.forEach((k, i) => {
-            const color = kpiColors[i % kpiColors.length];
             const col = document.createElement('div');
             col.className = 'an-kpi';
-            col.style.setProperty('--kpi-color', color);
+            col.style.setProperty('--kpi-color', kpiColors[i]);
             col.innerHTML = `
                 <div class="an-kpi-label">${k.title}</div>
                 <div class="an-kpi-value">${fmt(k.value)}</div>
@@ -578,16 +604,37 @@
         `;
         document.getElementById('chartsWrap').appendChild(col);
 
-        // Colors
-        let bgColors;
+        // ==================== ✅ ألوان فريدة لكل عنصر ====================
+        const labelCount = chart.labels ? chart.labels.length : 0;
+        const uniqueColors = generateDistinctColors(Math.max(labelCount, 1));
+        const borderColors = uniqueColors.map(c => lightenColor(c, 20));
+
+        let bgColors, borderColor, borderWidth, borderRadius, tension, fill;
+
         if (isDoughnut) {
-            bgColors = chart.labels.map((_, i) => palette[i % palette.length]);
+            // كل قطاع بلون فريد
+            bgColors     = uniqueColors;
+            borderColor  = '#fff';
+            borderWidth  = 2;
+            borderRadius = 0;
+            tension      = 0;
+            fill         = undefined;
         } else if (isLine) {
-            bgColors = palette[0];
+            // خط واحد بلون مميز + نقاط
+            bgColors     = uniqueColors[0];
+            borderColor  = uniqueColors[0];
+            borderWidth  = 2;
+            borderRadius = 0;
+            tension      = 0.35;
+            fill         = false;
         } else {
-            bgColors = chart.labels.length <= 8
-                ? chart.labels.map((_, i) => palette[i % palette.length])
-                : palette[0];
+            // ✅ كل عمود/شريط بلون فريد — بلا استثناء
+            bgColors     = uniqueColors;
+            borderColor  = borderColors;
+            borderWidth  = 1;
+            borderRadius = 8;
+            tension      = 0;
+            fill         = undefined;
         }
 
         destroyChart(chartKey);
@@ -601,11 +648,11 @@
                     label: chart.title,
                     data: chart.data,
                     backgroundColor: bgColors,
-                    borderColor: isLine ? palette[0] : (isDoughnut ? '#fff' : 'transparent'),
-                    borderWidth: isDoughnut ? 2 : (isLine ? 2 : 0),
-                    borderRadius: (isDoughnut || isLine) ? 0 : 8,
-                    tension: isLine ? 0.35 : 0,
-                    fill: isLine ? false : undefined,
+                    borderColor: borderColor,
+                    borderWidth: borderWidth,
+                    borderRadius: borderRadius,
+                    tension: tension,
+                    fill: fill,
                 }]
             },
             options: {
@@ -618,8 +665,8 @@
                         position: 'bottom',
                         rtl: true,
                         labels: {
-                            boxWidth: 10,
-                            boxHeight: 10,
+                            boxWidth: 12,
+                            boxHeight: 12,
                             padding: 10,
                             font: { size: 11 },
                             color: '#475569',

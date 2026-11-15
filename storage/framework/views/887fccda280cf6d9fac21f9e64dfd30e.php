@@ -1,5 +1,3 @@
-
-
 <?php $__env->startSection('title', 'رفع ملف Excel'); ?>
 <?php $__env->startSection('page_title', 'رفع ملف Excel'); ?>
 
@@ -52,7 +50,7 @@
 
             <div class="upload-card">
                 <form method="POST"
-                      action="<?php echo e(route('admin.excel-modules.preview')); ?>"
+                      action="/admin/excel-modules/preview"
                       enctype="multipart/form-data"
                       id="uploadForm">
                     <?php echo csrf_field(); ?>

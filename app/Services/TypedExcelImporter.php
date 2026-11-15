@@ -2,367 +2,739 @@
 
 namespace App\Services;
 
-use RuntimeException;
 use App\Models\ModuleImportBatch;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use OpenSpout\Reader\XLSX\Reader as XlsxReader;
+use Illuminate\Support\Facades\Storage;
+use OpenSpout\Reader\XLSX\Reader;
+use OpenSpout\Reader\XLSX\Options as XLSXOptions;
 
 class TypedExcelImporter
 {
-    /* =========================================================
-       PREVIEW — يقرأ أول 12 صفًا فقط (سريع جدًا)
-    ========================================================= */
-    public function preview(string $absolutePath): array
+    private const CHUNK_SIZE = 400;
+    private const COMMIT_EVERY = 5000;
+
+    /** أقصى صفوف بيانات تُحسب في المعاينة — 0 = لا حد (اقرأ كل الصفوف) */
+    private const PREVIEW_MAX_DATA_ROWS = 0;
+
+    /** أقصى صف للبحث عن الهيدر */
+    private const HEADER_SCAN_MAX = 20;
+
+    public function preview(string $filePath): array
     {
-        $reader = new XlsxReader();
-        $reader->open($absolutePath);
+        @set_time_limit(120);
+        @ini_set('memory_limit', '512M');
 
-        $moduleCode   = null;
-        $moduleNameAr = null;
-        $headers      = [];
-        $preview      = [];
-        $total        = 0;
-        $dataSheetName = null;
-
-        try {
-            foreach ($reader->getSheetIterator() as $sheet) {
-                $sheetName = $sheet->getName();
-                $n = mb_strtolower($sheetName);
-
-                // _System
-                if ($n === '_system' || $n === 'system') {
-                    foreach ($sheet->getRowIterator() as $row) {
-                        $cells = $row->getCells();
-                        $key = trim((string) ($cells[0]->getValue() ?? ''));
-                        $val = $cells[1]->getValue() ?? null;
-                        if ($key === 'ModuleCode') $moduleCode = trim((string) $val);
-                        if ($key === 'Module')     $moduleNameAr = trim((string) $val);
-                    }
-                    continue;
-                }
-
-                // البيانات (أول ورقة بيانات فقط)
-                if ($dataSheetName === null
-                    && (str_contains($n, 'بيان') || str_contains($n, 'data') || !str_starts_with($n, '_'))) {
-                    $dataSheetName = $sheetName;
-
-                    foreach ($sheet->getRowIterator() as $row) {
-                        $cells = [];
-                        foreach ($row->getCells() as $cell) {
-                            $cells[] = $cell->getValue();
-                        }
-
-                        // أول صف غير فارغ = الهيدر
-                        if (empty($headers)) {
-                            $headers = array_map(fn ($c) => trim((string) $c), $cells);
-                            continue;
-                        }
-
-                        // تجاهل الفارغ
-                        if (array_filter($cells, fn ($c) => $c !== null && $c !== '') === []) {
-                            continue;
-                        }
-
-                        $total++;
-                        if (count($preview) < 12) {
-                            $preview[] = $cells;
-                        }
-                    }
-                }
-            }
-        } finally {
-            $reader->close();
-        }
-
-        if (!$moduleCode) {
-            throw new RuntimeException('لم يتم العثور على ModuleCode في شيت _System');
-        }
-
-        $config = config('excel_modules.' . $moduleCode);
+        $resolved = $this->resolveModule($filePath, basename($filePath));
+        $moduleCode = $resolved['code'];
+        $config = config("excel_modules.{$moduleCode}");
         if (!$config) {
-            throw new RuntimeException("ModuleCode غير معروف: {$moduleCode}");
+            throw new \RuntimeException("الموديول [{$moduleCode}] غير مسجّل.");
+        }
+
+        $scan = $this->scanDataSheet(
+            $filePath,
+            $config['columns'] ?? [],
+            limitDataRows: self::PREVIEW_MAX_DATA_ROWS
+        );
+
+        // ملفات بدون صف عنوان
+        if (($scan['matched_count'] ?? 0) < 1 && !empty($resolved['system']['ModuleCode'])) {
+            $scan['headers'] = array_keys($config['columns'] ?? []);
+            $scan['matched_count'] = count($scan['headers']);
+            $scan['header_row_index'] = 0;
+            $scan['_positional'] = true;
         }
 
         return [
-            'module_code'      => $moduleCode,
-            'module_name_ar'   => $moduleNameAr ?: ($config['name_ar'] ?? $moduleCode),
-            'template_version' => null,
-            'table'            => $config['table'],
-            'headers'          => $headers,
-            'total_rows'       => $total,
-            'preview_rows'     => $preview,
-            'mapped_columns'   => array_values($config['columns'] ?? []),
+            'module_code'       => $moduleCode,
+            'module_name_ar'    => $config['name_ar'] ?? $moduleCode,
+            'template_version'  => $resolved['system']['TemplateVersion'] ?? null,
+            'headers'           => $scan['headers'],
+            'total_rows'        => $scan['total_rows'],
+            'total_rows_capped' => $scan['capped'],
+            'preview_rows'      => $scan['preview_rows'],
+            '_inferred'         => $resolved['inferred'],
+            'system'            => $resolved['system'],
+            'header_row_index'  => $scan['header_row_index'],
+            'matched_columns'   => $scan['matched_count'],
         ];
     }
 
-    /* =========================================================
-       IMPORT — streaming، ذاكرة ثابتة (~10MB لأي حجم)
-    ========================================================= */
     public function import(
         string $storedPath,
         string $originalFilename,
-        ?int $userId = null,
+        int $userId,
         bool $replaceExisting = true
     ): ModuleImportBatch {
-        $absolute = \Storage::disk('local')->path($storedPath);
-        if (!is_file($absolute)) {
-            throw new RuntimeException('الملف غير موجود: ' . $storedPath);
+        @set_time_limit(0);
+        @ini_set('memory_limit', '1024M');
+
+        $absolutePath = Storage::disk('local')->path($storedPath);
+        $resolved = $this->resolveModule($absolutePath, $originalFilename);
+        $moduleCode = $resolved['code'];
+
+        $config = config("excel_modules.{$moduleCode}");
+        if (!$config) {
+            throw new \RuntimeException("الموديول [{$moduleCode}] غير موجود في السجل.");
         }
 
-        $reader = new XlsxReader();
-        $reader->open($absolute);
+        $tableName = $this->resolveTableName($config, $moduleCode);
+        if (!Schema::hasTable($tableName)) {
+            throw new \RuntimeException("الجدول [{$tableName}] غير موجود. نفّذ php artisan migrate");
+        }
 
-        $moduleCode   = null;
-        $moduleNameAr = null;
-        $headers      = null;
-        $headerIndex  = [];
-        $batch        = null;
-        $table        = null;
-        $map          = null;
-        $imported     = 0;
-        $skipped      = 0;
-        $total        = 0;
-        $buffer       = [];
+        $columnsMap = $config['columns'] ?? [];
+        $normalizedColumnsMap = [];
+        foreach ($columnsMap as $ar => $en) {
+            $normalizedColumnsMap[$this->normalizeArabic((string) $ar)] = $en;
+            $normalizedColumnsMap[trim((string) $ar)] = $en;
+        }
+
+        $tableColumns = array_flip(Schema::getColumnListing($tableName));
+
+        // مسح الهيدر فقط
+        $scan = $this->scanDataSheet($absolutePath, $columnsMap, limitDataRows: 0);
+        $hasSystemCode = !empty($resolved['system']['ModuleCode']);
+
+        if ($scan['matched_count'] < 1 && !$hasSystemCode) {
+            throw new \RuntimeException(
+                'لم أستطع تحديد الموديول من أسماء الأعمدة. '
+                . 'المحاول: ' . $moduleCode . ' — الرؤوس: ['
+                . implode(' | ', array_slice($scan['headers'], 0, 10)) . ']'
+            );
+        }
+
+        $usePositional = false;
+        if ($scan['matched_count'] < 1 && $hasSystemCode) {
+            $usePositional = true;
+            $scan['header_row_index'] = 0;
+        }
+
+        $reader = new Reader(new XLSXOptions());
+        $reader->open($absolutePath);
+
+        $imported = 0;
+        $skipped = 0;
+        $chunkBuffer = [];
+        $now = now();
+        $batch = null;
+
+        // ✅ اكتشف نوع قاعدة البيانات
+        $driver = DB::connection()->getDriverName();
+        $isMysql = $driver === 'mysql';
+
+        DB::connection()->disableQueryLog();
 
         try {
+            // ✅ هذه الأوامر مدعومة في MySQL فقط
+            if ($isMysql) {
+                DB::statement('SET FOREIGN_KEY_CHECKS=0');
+                DB::statement('SET UNIQUE_CHECKS=0');
+            }
+
+            if ($replaceExisting) {
+                DB::table($tableName)->truncate();
+            }
+
+            $batch = ModuleImportBatch::create([
+                'module_code'       => $moduleCode,
+                'module_name_ar'    => $config['name_ar'] ?? $moduleCode,
+                'original_filename' => $originalFilename,
+                'file_hash'         => @hash_file('sha256', $absolutePath) ?: null,
+                'total_rows'        => 0,
+                'imported_rows'     => 0,
+                'skipped_rows'      => 0,
+                'status'            => 'processing',
+                'user_id'           => $userId,
+                'replaced_existing' => $replaceExisting,
+            ]);
+
             DB::beginTransaction();
 
-            foreach ($reader->getSheetIterator() as $sheet) {
-                $n = mb_strtolower($sheet->getName());
+            $targetHeaderIndex = (int) $scan['header_row_index'];
+            if (!$usePositional) {
+                $targetHeaderIndex = max(1, $targetHeaderIndex);
+            }
 
-                /* ---- _System ---- */
-                if ($n === '_system' || $n === 'system') {
-                    foreach ($sheet->getRowIterator() as $row) {
-                        $cells = $row->getCells();
-                        $key = trim((string) ($cells[0]->getValue() ?? ''));
-                        $val = $cells[1]->getValue() ?? null;
-                        if ($key === 'ModuleCode') $moduleCode = trim((string) $val);
-                        if ($key === 'Module')     $moduleNameAr = trim((string) $val);
-                    }
+            foreach ($reader->getSheetIterator() as $sheet) {
+                if ($this->isMetaSheet($sheet->getName())) {
                     continue;
                 }
 
-                /* ---- البيانات ---- */
-                if ($headers !== null) continue;   // عالجناها بالفعل
+                $rowIndex = 0;
+                $headerMap = [];
+                $headerFound = false;
+
+                if ($usePositional) {
+                    $englishOrdered = [];
+                    foreach ($columnsMap as $ar => $en) {
+                        if (!in_array($en, $englishOrdered, true)) {
+                            $englishOrdered[] = $en;
+                        }
+                    }
+                    foreach ($englishOrdered as $idx => $englishCol) {
+                        if (isset($tableColumns[$englishCol])) {
+                            $headerMap[$idx] = $englishCol;
+                        }
+                    }
+                    $headerFound = true;
+                }
 
                 foreach ($sheet->getRowIterator() as $row) {
-                    $cells = [];
-                    foreach ($row->getCells() as $cell) {
-                        $cells[] = $cell->getValue();
-                    }
+                    $rowIndex++;
+                    $cells = $this->rowToArray($row);
 
-                    /* أول صف = الهيدر */
-                    if ($headers === null) {
-                        $headers = array_map(fn ($c) => trim((string) $c), $cells);
-
-                        // حل ModuleCode إن لم يكن من _System
-                        if (!$moduleCode) {
-                            $moduleCode = $this->inferModuleFromHeaders($headers);
+                    if (!$headerFound) {
+                        if ($rowIndex < $targetHeaderIndex) {
+                            continue;
                         }
-
-                        $config = config('excel_modules.' . $moduleCode);
-                        if (!$config) {
-                            throw new RuntimeException("ModuleCode غير معروف: {$moduleCode}");
-                        }
-
-                        $table = $config['table'];
-                        $map   = $config['columns'];
-
-                        foreach ($headers as $i => $h) {
-                            $k = $this->normalizeHeader($h);
-                            if ($k !== '' && !isset($headerIndex[$k])) {
-                                $headerIndex[$k] = $i;
+                        foreach ($cells as $idx => $arabicHeader) {
+                            $arabic = trim((string) $arabicHeader);
+                            if ($arabic === '') {
+                                continue;
+                            }
+                            $n = $this->normalizeArabic($arabic);
+                            $english = $columnsMap[$arabic]
+                                ?? $normalizedColumnsMap[$arabic]
+                                ?? $normalizedColumnsMap[$n]
+                                ?? null;
+                            if ($english && isset($tableColumns[$english])) {
+                                $headerMap[$idx] = $english;
                             }
                         }
-
-                        if ($replaceExisting && Schema::hasTable($table)) {
-                            DB::table($table)->delete();
+                        $headerFound = true;
+                        if (count($headerMap) < 1) {
+                            throw new \RuntimeException(
+                                'لا توجد أعمدة مطابقة للموديول [' . $moduleCode . '] في صف ' . $rowIndex
+                            );
                         }
-
-                        $batch = ModuleImportBatch::create([
-                            'module_code'       => $moduleCode,
-                            'module_name_ar'    => $moduleNameAr ?: $config['name_ar'],
-                            'original_filename' => $originalFilename,
-                            'file_hash'         => hash_file('sha256', $absolute),
-                            'status'            => 'processing',
-                            'user_id'           => $userId,
-                            'replaced_existing' => $replaceExisting,
-                        ]);
-
                         continue;
                     }
 
-                    /* تجاهل الصفوف الفارغة */
-                    if (array_filter($cells, fn ($c) => $c !== null && $c !== '') === []) {
+                    if ($this->isEmptyRow($cells)) {
+                        $skipped++;
                         continue;
                     }
 
-                    $total++;
-                    $attrs = $this->mapRow($cells, $headerIndex, $map);
-                    if (empty($attrs)) { $skipped++; continue; }
-
-                    $attrs['module_import_batch_id'] = $batch->id;
-                    if ($table !== 'production_lines') {
-                        $attrs['import_batch_id'] = $batch->id;
+                    $record = [
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
+                    if (isset($tableColumns['module_import_batch_id'])) {
+                        $record['module_import_batch_id'] = $batch->id;
+                    }
+                    if (isset($tableColumns['import_batch_id'])) {
+                        $record['import_batch_id'] = $batch->id;
+                    }
+                    if (isset($tableColumns['created_by'])) {
+                        $record['created_by'] = $userId;
+                    }
+                    if (isset($tableColumns['updated_by'])) {
+                        $record['updated_by'] = $userId;
                     }
 
-                    foreach (['x_coordinate', 'y_coordinate'] as $coord) {
-                        if (array_key_exists($coord, $attrs)) {
-                            $attrs[$coord] = $this->normalizeCoordinate($attrs[$coord]);
+                    $hasData = false;
+                    foreach ($headerMap as $idx => $englishCol) {
+                        $val = $this->normalizeValue($cells[$idx] ?? null);
+                        $record[$englishCol] = $val;
+                        if ($val !== null && $val !== '') {
+                            $hasData = true;
                         }
                     }
+                    if (!$hasData) {
+                        $skipped++;
+                        continue;
+                    }
 
-                    $attrs = $this->filterExistingColumns($table, $attrs);
-                    $attrs = $this->fitToColumns($table, $attrs);
+                    $chunkBuffer[] = $record;
+                    $imported++;
 
-                    if (empty($attrs)) { $skipped++; continue; }
-
-                    $buffer[] = $attrs + ['created_at' => now(), 'updated_at' => now()];
-
-                    if (count($buffer) >= 500) {
-                        DB::table($table)->insert($buffer);
-                        $imported += count($buffer);
-                        $buffer = [];
+                    if (count($chunkBuffer) >= self::CHUNK_SIZE) {
+                        DB::table($tableName)->insert($chunkBuffer);
+                        $chunkBuffer = [];
+                        if ($imported % self::COMMIT_EVERY === 0) {
+                            DB::commit();
+                            DB::beginTransaction();
+                            $batch->update([
+                                'imported_rows' => $imported,
+                                'skipped_rows'  => $skipped,
+                                'total_rows'    => $imported + $skipped,
+                            ]);
+                        }
                     }
                 }
+                break;
             }
 
-            if (!empty($buffer)) {
-                DB::table($table)->insert($buffer);
-                $imported += count($buffer);
+            if (!empty($chunkBuffer)) {
+                DB::table($tableName)->insert($chunkBuffer);
             }
-
-            if (!$batch) {
-                throw new RuntimeException('لم يتم العثور على ورقة بيانات في الملف');
-            }
+            $reader->close();
 
             $batch->update([
-                'total_rows'    => $total,
+                'total_rows'    => $imported + $skipped,
                 'imported_rows' => $imported,
                 'skipped_rows'  => $skipped,
                 'status'        => 'completed',
             ]);
-
             DB::commit();
+            Cache::forget('excel_preview_' . md5($storedPath));
+
+            return $batch->fresh();
         } catch (\Throwable $e) {
-            DB::rollBack();
+            try { DB::rollBack(); } catch (\Throwable $ignore) {}
+            try { $reader->close(); } catch (\Throwable $ignore) {}
             if ($batch) {
-                $batch->update([
-                    'status'        => 'failed',
-                    'error_message' => mb_substr($e->getMessage(), 0, 500),
-                ]);
+                try {
+                    $batch->update([
+                        'status'        => 'failed',
+                        'imported_rows' => $imported,
+                        'skipped_rows'  => $skipped,
+                        'total_rows'    => $imported + $skipped,
+                    ]);
+                } catch (\Throwable $ignore) {}
             }
             throw $e;
+        } finally {
+            if ($isMysql) {
+                try {
+                    DB::statement('SET FOREIGN_KEY_CHECKS=1');
+                    DB::statement('SET UNIQUE_CHECKS=1');
+                } catch (\Throwable $ignore) {}
+            }
+        }
+    }
+
+    private function resolveModule(string $filePath, string $originalName): array
+    {
+        $system = $this->readSystemSheetRaw($filePath);
+        $systemCode = $system['ModuleCode'] ?? '';
+
+        if ($systemCode === 'PRODUCTION_SCOPES') {
+            $systemCode = '';
+        }
+
+        if ($systemCode !== '' && config("excel_modules.{$systemCode}")) {
+            return [
+                'code' => $systemCode,
+                'inferred' => false,
+                'system' => $system,
+            ];
+        }
+
+        $fromFile = $this->inferModuleCodeFromFilename($originalName)
+            ?? $this->inferModuleCodeFromFilename($filePath);
+        if ($fromFile && $fromFile !== 'PRODUCTION_SCOPES' && config("excel_modules.{$fromFile}")) {
+            return [
+                'code' => $fromFile,
+                'inferred' => true,
+                'system' => array_merge($system, [
+                    'ModuleCode' => $fromFile,
+                    'Module' => config("excel_modules.{$fromFile}.name_ar", $fromFile),
+                    '_inferred' => true,
+                ]),
+            ];
+        }
+
+        $fromHeaders = $this->inferModuleCodeFromHeadersFast($filePath);
+        if ($fromHeaders && config("excel_modules.{$fromHeaders}")) {
+            return [
+                'code' => $fromHeaders,
+                'inferred' => true,
+                'system' => array_merge($system, [
+                    'ModuleCode' => $fromHeaders,
+                    'Module' => config("excel_modules.{$fromHeaders}.name_ar", $fromHeaders),
+                    '_inferred' => true,
+                ]),
+            ];
+        }
+
+        throw new \RuntimeException(
+            'لم أستطع تحديد الموديول من أسماء الأعمدة ولا من اسم الملف ['
+            . basename($originalName) . ']. '
+            . 'أضف شيت _System فيه ModuleCode أو سمِّ الملف باسم الموديول (مثال: نسب السحب.xlsx).'
+        );
+    }
+
+    /**
+     * @param int $limitDataRows 0 = لا حد (اقرأ كل الصفوف)، >0 = حد أقصى
+     */
+    private function scanDataSheet(string $filePath, array $columnsMap, int $limitDataRows = 0): array
+    {
+        $normMap = [];
+        foreach ($columnsMap as $ar => $en) {
+            $normMap[$this->normalizeArabic((string) $ar)] = $en;
+        }
+
+        $reader = new Reader(new XLSXOptions());
+        $reader->open($filePath);
+
+        $result = [
+            'headers' => [],
+            'header_row_index' => 1,
+            'matched_count' => 0,
+            'total_rows' => 0,
+            'preview_rows' => [],
+            'capped' => false,
+        ];
+
+        // ✅ 0 = لا حد
+        $limit = $limitDataRows > 0 ? $limitDataRows : PHP_INT_MAX;
+
+        try {
+            foreach ($reader->getSheetIterator() as $sheet) {
+                if ($this->isMetaSheet($sheet->getName())) {
+                    continue;
+                }
+
+                $rowIndex = 0;
+                $candidates = [];
+                $headerRowIndex = null;
+                $headers = [];
+                $matched = 0;
+                $total = 0;
+                $preview = [];
+                $pastHeader = false;
+
+                foreach ($sheet->getRowIterator() as $row) {
+                    $rowIndex++;
+                    $cells = $this->rowToArray($row);
+                    $labels = array_map(fn ($h) => trim((string) $h), $cells);
+
+                    if (!$pastHeader) {
+                        if ($rowIndex <= self::HEADER_SCAN_MAX) {
+                            $hits = 0;
+                            foreach ($labels as $lab) {
+                                if ($lab === '') {
+                                    continue;
+                                }
+                                $n = $this->normalizeArabic($lab);
+                                if (isset($normMap[$n]) || isset($columnsMap[$lab])) {
+                                    $hits++;
+                                }
+                            }
+                            $candidates[] = [
+                                'index' => $rowIndex,
+                                'hits' => $hits,
+                                'labels' => array_values(array_filter($labels, fn ($x) => $x !== '')),
+                            ];
+                        }
+
+                        if ($rowIndex === self::HEADER_SCAN_MAX || ($rowIndex >= 3 && !empty($candidates))) {
+                            usort($candidates, fn ($a, $b) => $b['hits'] <=> $a['hits']);
+                            if (!empty($candidates) && $candidates[0]['hits'] >= 1) {
+                                $headerRowIndex = $candidates[0]['index'];
+                                $headers = $candidates[0]['labels'];
+                                $matched = $candidates[0]['hits'];
+                                $pastHeader = true;
+                                if ($rowIndex === $headerRowIndex) {
+                                    continue;
+                                }
+                            }
+                        }
+
+                        if (!$pastHeader) {
+                            if ($rowIndex > self::HEADER_SCAN_MAX) {
+                                if (!empty($candidates)) {
+                                    usort($candidates, fn ($a, $b) => $b['hits'] <=> $a['hits']);
+                                    $headerRowIndex = $candidates[0]['index'];
+                                    $headers = $candidates[0]['labels'];
+                                    $matched = $candidates[0]['hits'];
+                                    $pastHeader = true;
+                                } else {
+                                    break;
+                                }
+                            } else {
+                                continue;
+                            }
+                        }
+
+                        if ($rowIndex <= $headerRowIndex) {
+                            if ($rowIndex === $headerRowIndex) {
+                                continue;
+                            }
+                            continue;
+                        }
+                    }
+
+                    if ($this->isEmptyRow($cells)) {
+                        continue;
+                    }
+
+                    // ✅ الآن: 0 يعني لا حد — نعدّ كل الصفوف
+                    $total++;
+                    if (count($preview) < 15) {
+                        $preview[] = $cells;
+                    }
+                    if ($total >= $limit) {
+                        $result['capped'] = true;
+                        break;
+                    }
+                }
+
+                if ($headerRowIndex === null && !empty($candidates)) {
+                    usort($candidates, fn ($a, $b) => $b['hits'] <=> $a['hits']);
+                    $headerRowIndex = $candidates[0]['index'];
+                    $headers = $candidates[0]['labels'];
+                    $matched = $candidates[0]['hits'];
+                }
+
+                $result = [
+                    'headers' => $headers,
+                    'header_row_index' => $headerRowIndex ?? 1,
+                    'matched_count' => $matched,
+                    'total_rows' => $total,
+                    'preview_rows' => $preview,
+                    'capped' => $result['capped'],
+                ];
+                break;
+            }
         } finally {
             $reader->close();
         }
 
-        return $batch->fresh();
+        return $result;
     }
 
-    /* =========================================================
-       HELPERS
-    ========================================================= */
-
-    private function inferModuleFromHeaders(array $headers): string
+    private function inferModuleCodeFromHeadersFast(string $filePath): ?string
     {
-        $all = config('excel_modules', []);
-        $best = null;
+        $headerLabels = $this->readCandidateHeaderLabels($filePath);
+        if (empty($headerLabels)) {
+            return null;
+        }
+        $normHeaders = array_map(fn ($h) => $this->normalizeArabic($h), $headerLabels);
+
+        $bestCode = null;
         $bestScore = 0;
 
-        foreach ($all as $code => $cfg) {
-            $wanted = [];
-            foreach (array_keys($cfg['columns'] ?? []) as $ar) {
-                $wanted[$this->normalizeHeader($ar)] = true;
+        foreach (config('excel_modules', []) as $code => $cfg) {
+            if ($code === 'PRODUCTION_SCOPES') {
+                continue;
             }
-            $score = 0;
-            foreach ($headers as $h) {
-                $k = $this->normalizeHeader($h);
-                if ($k !== '' && isset($wanted[$k])) $score++;
+            $cols = $cfg['columns'] ?? [];
+            if (count($cols) < 2) {
+                continue;
             }
-            if ($score > $bestScore && $score >= 3) {
-                $bestScore = $score;
-                $best = $code;
+            $keys = [];
+            foreach (array_keys($cols) as $k) {
+                $keys[$this->normalizeArabic((string) $k)] = true;
+            }
+            $hits = 0;
+            foreach ($normHeaders as $h) {
+                if ($h !== '' && isset($keys[$h])) {
+                    $hits++;
+                }
+            }
+            if ($hits > $bestScore) {
+                $bestScore = $hits;
+                $bestCode = $code;
             }
         }
 
-        if (!$best) {
-            throw new RuntimeException('لم أستطع تحديد الموديول من أسماء الأعمدة');
+        return $bestScore >= 2 ? $bestCode : null;
+    }
+
+    private function readCandidateHeaderLabels(string $filePath): array
+    {
+        $reader = new Reader(new XLSXOptions());
+        $reader->open($filePath);
+        $best = [];
+        $bestHitsGeneric = 0;
+        try {
+            foreach ($reader->getSheetIterator() as $sheet) {
+                if ($this->isMetaSheet($sheet->getName())) {
+                    continue;
+                }
+                $rowIndex = 0;
+                foreach ($sheet->getRowIterator() as $row) {
+                    $rowIndex++;
+                    if ($rowIndex > self::HEADER_SCAN_MAX) {
+                        break;
+                    }
+                    $labels = [];
+                    foreach ($this->rowToArray($row) as $c) {
+                        $t = trim((string) $c);
+                        if ($t !== '') {
+                            $labels[] = $t;
+                        }
+                    }
+                    if (count($labels) > $bestHitsGeneric) {
+                        $bestHitsGeneric = count($labels);
+                        $best = $labels;
+                    }
+                }
+                break;
+            }
+        } finally {
+            $reader->close();
         }
+
         return $best;
     }
 
-    private function normalizeHeader(mixed $value): string
+    private function readSystemSheetRaw(string $filePath): array
     {
-        $v = trim((string) $value);
-        if ($v === '') return '';
-        $v = preg_replace('/[\x{064B}-\x{065F}\x{0640}]/u', '', $v);
-        $v = str_replace(['أ', 'إ', 'آ'], 'ا', $v);
-        $v = str_replace(['ى', 'ئ'], 'ي', $v);
-        $v = str_replace('ة', 'ه', $v);
-        $v = str_replace(['(', ')', '%', '/', '-', '_', '.'], ' ', $v);
-        $v = preg_replace('/\s+/u', ' ', $v);
-        return mb_strtolower(trim($v));
-    }
-
-    private function mapRow(array $cells, array $headerIndex, array $map): array
-    {
-        $attrs = [];
-        foreach ($map as $arHeader => $enCol) {
-            $key = $this->normalizeHeader($arHeader);
-            if (!isset($headerIndex[$key])) continue;
-            $idx = $headerIndex[$key];
-            $val = $cells[$idx] ?? null;
-            if (is_string($val)) $val = trim($val);
-            $attrs[$enCol] = $val === '' ? null : $val;
-        }
-        return $attrs;
-    }
-
-    private function filterExistingColumns(string $table, array $attrs): array
-    {
-        static $cache = [];
-        if (!isset($cache[$table])) {
-            $cache[$table] = Schema::getColumnListing($table);
-        }
-        return array_filter(
-            $attrs,
-            fn ($v, $k) => in_array($k, $cache[$table], true),
-            ARRAY_FILTER_USE_BOTH
-        );
-    }
-
-    private function fitToColumns(string $table, array $attrs): array
-    {
-        static $limits = [];
-        if (!isset($limits[$table])) {
-            $limits[$table] = [];
-            try {
-                foreach (Schema::getColumns($table) as $col) {
-                    if (preg_match('/^(?:var)?char\((\d+)\)/i', (string) ($col['type'] ?? ''), $m)) {
-                        $limits[$table][$col['name']] = (int) $m[1];
-                    }
+        $reader = new Reader(new XLSXOptions());
+        $reader->open($filePath);
+        $system = [];
+        try {
+            foreach ($reader->getSheetIterator() as $sheet) {
+                if ($sheet->getName() !== '_System') {
+                    continue;
                 }
-            } catch (\Throwable $e) {}
+                foreach ($sheet->getRowIterator() as $rowIndex => $row) {
+                    if ($rowIndex === 1) {
+                        continue;
+                    }
+                    $cells = $this->rowToArray($row);
+                    if (count($cells) < 2) {
+                        continue;
+                    }
+                    $key = trim((string) ($cells[0] ?? ''));
+                    $value = $cells[1] ?? null;
+                    if ($key === '') {
+                        continue;
+                    }
+                    if ($value instanceof \DateTimeInterface) {
+                        $value = $value->format('Y-m-d H:i:s');
+                    }
+                    $system[$key] = is_string($value) ? trim($value) : (string) ($value ?? '');
+                }
+                break;
+            }
+        } finally {
+            $reader->close();
         }
-        foreach ($attrs as $k => $v) {
-            if (is_string($v) && isset($limits[$table][$k]) && mb_strlen($v) > $limits[$table][$k]) {
-                $attrs[$k] = mb_substr($v, 0, $limits[$table][$k]);
-            } elseif ($v instanceof \DateTimeInterface) {
-                $attrs[$k] = $v->format('Y-m-d');
+
+        return $system;
+    }
+
+    private function normalizeArabic(string $text): string
+    {
+        $text = mb_strtolower(trim($text), 'UTF-8');
+        $text = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $text) ?? $text;
+        $text = strtr($text, [
+            'أ' => 'ا', 'إ' => 'ا', 'آ' => 'ا', 'ٱ' => 'ا',
+            'ة' => 'ه', 'ى' => 'ي', 'ؤ' => 'و', 'ئ' => 'ي',
+        ]);
+        $text = preg_replace('/\s+/u', ' ', $text) ?? $text;
+        $text = str_replace(['.xlsx', '.xls'], '', $text);
+        $text = preg_replace('/[\-_]?\d+$/u', '', $text) ?? $text;
+
+        return trim($text);
+    }
+
+    private function inferModuleCodeFromFilename(string $filePath): ?string
+    {
+        $filename = $this->normalizeArabic(basename($filePath));
+
+        $map = [
+            'نسب السحب'               => 'WITHDRAWAL_RATES',
+            'withdrawal'              => 'WITHDRAWAL_RATES',
+            'المخزون الاستراتيجي'     => 'STRATEGIC_INVENTORY',
+            'المخزون الاستراتيجى'     => 'STRATEGIC_INVENTORY',
+            'strategic inventory'     => 'STRATEGIC_INVENTORY',
+            'المعدات'                 => 'EQUIPMENT',
+            'equipment'               => 'EQUIPMENT',
+            'خطوط الانتاج'            => 'PRODUCTION_LINES',
+            'production lines'        => 'PRODUCTION_LINES',
+            'ماكينات'                 => 'MACHINES',
+            'machines'                => 'MACHINES',
+            'المخازن'                 => 'WAREHOUSES',
+            'المركبات'                => 'VEHICLES',
+            'الشركات'                 => 'COMPANY',
+            'الموارد البشريه'         => 'HUMAN_RESOURCES',
+            'المنشات والعقارات'       => 'FACILITIES_AND_PROPERTIES',
+        ];
+        uksort($map, fn ($a, $b) => mb_strlen($b) <=> mb_strlen($a));
+        foreach ($map as $needle => $code) {
+            if (mb_strpos($filename, $this->normalizeArabic($needle)) !== false) {
+                return $code;
             }
         }
-        return $attrs;
+
+        return null;
     }
 
-    private function normalizeCoordinate(mixed $value): ?float
+    private function isMetaSheet(string $sheetName): bool
     {
-        if ($value === null || $value === '') return null;
-        if (is_string($value)) $value = str_replace([',', ' ', '°'], ['.', '', ''], trim($value));
-        if (!is_numeric($value)) return null;
-        $f = (float) $value;
-        if ($f < -180 || $f > 180) return null;
-        return $f;
+        return $sheetName === '_System'
+            || str_starts_with($sheetName, 'Lookup_')
+            || str_starts_with($sheetName, '_');
+    }
+
+    private function rowToArray($row): array
+    {
+        $cells = [];
+        foreach ($row->getCells() as $cell) {
+            $val = $cell->getValue();
+            if ($val instanceof \DateTimeInterface) {
+                $val = $val->format('Y-m-d H:i:s');
+            }
+            $cells[] = $val;
+        }
+
+        return $cells;
+    }
+
+    private function isEmptyRow(array $cells): bool
+    {
+        foreach ($cells as $v) {
+            if ($v === null) {
+                continue;
+            }
+            if (is_string($v)) {
+                if (trim($v) !== '') {
+                    return false;
+                }
+            } elseif ($v !== 0 && $v !== '0') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function normalizeValue($value)
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d H:i:s');
+        }
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+        if (is_array($value)) {
+            return json_encode($value, JSON_UNESCAPED_UNICODE);
+        }
+        if (is_string($value)) {
+            $t = trim($value);
+            if ($t === '') {
+                return null;
+            }
+            $t = preg_replace('/<br\s*\/?>/i', ' ', $t) ?? $t;
+            $t = strip_tags($t);
+            $t = preg_replace('/\s+/u', ' ', $t) ?? $t;
+
+            return trim($t) === '' ? null : trim($t);
+        }
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        return $value === null ? null : (string) $value;
+    }
+
+    private function resolveTableName(array $config, string $moduleCode): string
+    {
+        if (!empty($config['table'])) {
+            return $config['table'];
+        }
+        $model = $config['model'] ?? null;
+        if ($model && class_exists($model)) {
+            return (new $model)->getTable();
+        }
+        throw new \RuntimeException("لا يمكن تحديد اسم الجدول للموديول [{$moduleCode}]");
     }
 }

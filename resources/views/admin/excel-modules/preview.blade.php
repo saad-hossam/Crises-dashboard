@@ -11,19 +11,19 @@
 
 @section('content')
 @php
-    // مفاتيح TypedExcelImporter::preview() — مع fallbacks آمنة
     $headers       = $preview['headers'] ?? [];
     $previewRows   = $preview['rows'] ?? $preview['preview_rows'] ?? [];
-    $totalRows     = $preview['total_rows'] ?? 0;
+    $totalRows     = (int) ($preview['total_rows'] ?? 0);
     $totalCols     = count($headers);
     $moduleCode    = $preview['module_code'] ?? null;
     $moduleNameAr  = $preview['module_name_ar'] ?? $preview['module_name'] ?? '—';
     $tableName     = $preview['table'] ?? $preview['table_name'] ?? '';
     $templateVer   = $preview['template_version'] ?? '—';
+    $isInferred    = (bool) ($preview['_inferred'] ?? false);
 
-    $shownCols     = array_slice($headers, 0, 10);
+    $shownCols       = array_slice($headers, 0, 10);
     $hiddenColsCount = max(0, $totalCols - 10);
-    $sampleCount   = count($previewRows);
+    $sampleCount     = count($previewRows);
 @endphp
 
 <div class="ip-page" dir="rtl">
@@ -50,6 +50,22 @@
             </p>
         </div>
     </div>
+
+    {{-- ============================================================
+         ALERT: if ModuleCode was inferred from filename
+         ============================================================ --}}
+    @if($isInferred)
+        <div class="alert alert-warning d-flex align-items-start gap-2 mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <div>
+                <strong>تنبيه:</strong>
+                لم يتم العثور على شيت <code>_System</code> في الملف،
+                وتم استنتاج <code>ModuleCode</code> من اسم الملف:
+                <code>{{ $moduleCode }}</code>.
+                راجع البيانات بعناية قبل التأكيد.
+            </div>
+        </div>
+    @endif
 
     {{-- ============================================================
          STEPS
@@ -115,7 +131,7 @@
     </div>
 
     {{-- ============================================================
-         ALERT
+         ALERT NOTE
          ============================================================ --}}
     <div class="ip-alert">
         <div class="ip-alert-icon">
@@ -128,6 +144,12 @@
                 بـ <strong>{{ $totalCols }}</strong> عمود.
                 @if($hiddenColsCount > 0)
                     · يتم عرض أول 10 أعمدة فقط، <strong>{{ $hiddenColsCount }}</strong> عمود إضافي سيتم استيراده أيضاً.
+                @endif
+                @if($totalRows > 5000)
+                    <br><small class="text-warning">
+                        <i class="bi bi-clock-history"></i>
+                        حجم كبير — قد يستغرق الاستيراد حتى دقيقة. لا تغلق الصفحة.
+                    </small>
                 @endif
             </p>
         </div>
@@ -191,9 +213,9 @@
                                 <td class="col-row-num">{{ $idx + 1 }}</td>
                                 @foreach($shownCols as $i => $h)
                                     @php
-                                        $val = $row[$i] ?? null;
-                                        $isArr = is_array($val);
-                                        $strVal = $isArr ? json_encode($val, JSON_UNESCAPED_UNICODE) : (string)($val ?? '');
+                                        $val     = $row[$i] ?? null;
+                                        $isArr   = is_array($val);
+                                        $strVal  = $isArr ? json_encode($val, JSON_UNESCAPED_UNICODE) : (string) ($val ?? '');
                                         $isEmpty = !$isArr && ($val === null || $val === '');
                                     @endphp
                                     <td title="{{ $strVal }}">
@@ -239,8 +261,10 @@
     {{-- ============================================================
          ACTION CARD
          ============================================================ --}}
-    <form method="POST" action="{{ route('admin.excel-modules.import') }}" id="ipImportForm">
+    <form method="POST" action="/admin/excel-modules/import" id="ipImportForm">
         @csrf
+        <input type="hidden" name="import_ticket" value="{{ $importTicket ?? session('excel_import_ticket') }}">
+        <input type="hidden" name="import_payload" value="{{ $importPayload ?? session('excel_import_payload') }}">
         <div class="ip-action-card">
             <div class="ip-action-card-inner">
                 <div class="ip-checkbox">
@@ -275,9 +299,9 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const form        = document.getElementById('ipImportForm');
-    const submitBtn   = document.getElementById('ipSubmitBtn');
-    const replaceBox  = document.getElementById('replace');
+    const form       = document.getElementById('ipImportForm');
+    const submitBtn  = document.getElementById('ipSubmitBtn');
+    const replaceBox = document.getElementById('replace');
 
     if (!form || !submitBtn) return;
 
@@ -295,7 +319,7 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // نترك الـ form يرسل عادي (form submission) — الـ Controller سيرد بـ redirect
+        // تعطيل الزر فقط — بدون أي overlay أو loader
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> جاري الاستيراد...';
     });

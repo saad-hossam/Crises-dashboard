@@ -52,7 +52,7 @@
 
             <div class="upload-card">
                 <form method="POST"
-                      action="{{ route('admin.excel-modules.preview') }}"
+                      action="/admin/excel-modules/preview"
                       enctype="multipart/form-data"
                       id="uploadForm">
                     @csrf

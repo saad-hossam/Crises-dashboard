@@ -944,42 +944,7 @@ return [
         ],
     ],
 
-    'PRODUCTION_SCOPES' => [
-        'name_ar' => 'نطاقات الإنتاج',
-        'table'   => 'production_scopes',
-        'model'   => \App\Models\Modules\ProductionScope::class,
-        'icon'    => 'bi-diagram-3',
-        'charts'  => [
-            ['field' => 'line_case',        'type' => 'doughnut', 'title' => 'حالة الخط'],
-            ['field' => 'operational_case', 'type' => 'doughnut', 'title' => 'حالة التشغيل'],
-            ['field' => 'company_name',     'type' => 'bar',      'title' => 'حسب الجهة'],
-            ['field' => 'manufacturer',     'type' => 'bar',      'title' => 'الشركة المصنعة'],
-        ],
-        'columns' => [
-            // أعمدة ملف "خطوط الإنتاج المرفقة.xlsx"
-            'اسم خط الإنتاج'       => 'line_name',
-            'اسم المنتج'           => 'product_name',
-            'الشركة المصنعة للخط'  => 'manufacturer',
-            'حالة الخط'            => 'line_case',
-            'حالة التشغيل'         => 'operational_case',
-            'ملاحظات'              => 'notes',
-
-            // الأعمدة المشتركة (من $this->common())
-            'الجهة المالكة'        => 'owner_organization',
-            'نطاق الموقع'          => 'location_scope',
-            'المحافظة'             => 'governorate',
-            'اسم الجهة / الشركة'   => 'company_name',
-            'العنوان'              => 'address',
-            'حالة التشغيل العامة'  => 'operating_status',
-            'مستوى الجاهزية'       => 'readiness_level',
-            'تاريخ آخر تحديث'      => 'last_updated_date',
-            'مسؤول الإدخال'        => 'data_entry_responsible',
-            'X'                    => 'x_coordinate',
-            'Y'                    => 'y_coordinate',
-            'الوحدة'               => 'unit_name',
-            'كود الوحدة'           => 'unit_code',
-        ],
-    ],
+    // PRODUCTION_SCOPES removed from registry (model+migration kept)
 
     'MACHINES' => [
         'name_ar' => 'ماكينات',
@@ -1200,6 +1165,8 @@ return [
             'نطاق الموقع' => 'location_scope',
             'المحافظة' => 'governorate',
             'اسم الصنف' => 'item_name',
+            'كود الصنف' => 'item_code',
+            'الصنف' => 'item_name',
             'الكمية المتاحة' => 'available_quantity',
             'وحدة القياس' => 'unit_of_measure',
             'الحد الادني' => 'min_limit',
