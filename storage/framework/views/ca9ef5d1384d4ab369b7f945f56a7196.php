@@ -1,0 +1,1 @@
+<?php /**PATH C:\Users\pc\Music\Crises-dashboard\Crises-dashboard\resources\views/components/admin/breadcrumb.blade.php ENDPATH**/ ?>

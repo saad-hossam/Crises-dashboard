@@ -1,0 +1,675 @@
+/* ============================================================
+   AOI DYNAMIC PALETTE SYSTEM
+   مستوحى من شعار الهيئة العربية للتصنيع
+   - أسود/رمادي (الخلفية الرئيسية)
+   - برتقالي (Accent)
+   - أزرق فاتح (Secondary)
+   - بدون أي ألوان AI بنفسجية
+   ============================================================ */
+
+/* ============================================================
+   1. DEFAULT PALETTE — AOI BRAND (البرتقالي الأساسي)
+   ============================================================ */
+:root,
+html[data-palette="aoi"] {
+    /* Primary = البرتقالي من الشعار */
+    --aoi-primary:        #f37321;
+    --aoi-primary-2:      #ff8a3d;
+    --aoi-primary-rgb:    243, 115, 33;
+    --aoi-primary-dark:   #c45a0e;
+
+    /* Accent = الأزرق الفاتح من الشعار */
+    --aoi-accent:         #5b9bd5;
+    --aoi-accent-2:       #2e75b6;
+    --aoi-accent-rgb:     91, 155, 213;
+
+    /* Sidebar (أسود AOI) */
+    --admin-sidebar:        #1a1a1a;
+    --admin-sidebar-hover:  #2a2a2a;
+    --admin-sidebar-active: #f37321;
+    --admin-sidebar-deep:   #0f0f0f;
+    --admin-sidebar-text:   #e5e7eb;
+    --admin-sidebar-muted:  #9ca3af;
+
+    /* Surfaces */
+    --aoi-surface:   #ffffff;
+    --aoi-bg:        #f5f5f5;
+    --aoi-text:      #1a1a1a;
+    --aoi-muted:     #6b7280;
+    --aoi-border:    #e0e0e0;
+
+    /* Radius & Shadow */
+    --aoi-radius:    1rem;
+    --aoi-radius-sm: 0.75rem;
+    --aoi-shadow:    0 10px 28px rgba(26, 26, 26, 0.07);
+
+    /* Typography */
+    --aoi-fs-base: 15px;
+}
+
+/* ============================================================
+   2. PALETTE: BLACK (أسود فقط — برتقالي خفيف)
+   ============================================================ */
+html[data-palette="black"] {
+    --aoi-primary:        #1a1a1a;
+    --aoi-primary-2:      #2d2d2d;
+    --aoi-primary-rgb:    26, 26, 26;
+    --aoi-primary-dark:   #000000;
+
+    --aoi-accent:         #f37321;
+    --aoi-accent-2:       #c45a0e;
+    --aoi-accent-rgb:     243, 115, 33;
+
+    --admin-sidebar:        #0f0f0f;
+    --admin-sidebar-hover:  #1f1f1f;
+    --admin-sidebar-active: #f37321;
+    --admin-sidebar-deep:   #050505;
+    --admin-sidebar-text:   #e5e7eb;
+    --admin-sidebar-muted:  #9ca3af;
+
+    --aoi-surface:   #ffffff;
+    --aoi-bg:        #f5f5f5;
+    --aoi-text:      #0f0f0f;
+    --aoi-muted:     #6b7280;
+    --aoi-border:    #e0e0e0;
+}
+
+/* ============================================================
+   3. PALETTE: BLUE (أزرق AOI)
+   ============================================================ */
+html[data-palette="blue"] {
+    --aoi-primary:        #2e75b6;
+    --aoi-primary-2:      #5b9bd5;
+    --aoi-primary-rgb:    46, 117, 182;
+    --aoi-primary-dark:   #1e4f7f;
+
+    --aoi-accent:         #f37321;
+    --aoi-accent-2:       #c45a0e;
+    --aoi-accent-rgb:     243, 115, 33;
+
+    --admin-sidebar:        #0f1e2e;
+    --admin-sidebar-hover:  #1a2e42;
+    --admin-sidebar-active: #5b9bd5;
+    --admin-sidebar-deep:   #081420;
+    --admin-sidebar-text:   #cbd5e1;
+    --admin-sidebar-muted:  #7a8fa6;
+
+    --aoi-surface:   #ffffff;
+    --aoi-bg:        #f0f4f8;
+    --aoi-text:      #0f1e2e;
+    --aoi-muted:     #5a6b7a;
+    --aoi-border:    #d0dbe6;
+}
+
+/* ============================================================
+   4. PALETTE: GRAPHITE (رمادي AOI)
+   ============================================================ */
+html[data-palette="graphite"] {
+    --aoi-primary:        #4a4a4a;
+    --aoi-primary-2:      #6b6b6b;
+    --aoi-primary-rgb:    74, 74, 74;
+    --aoi-primary-dark:   #2a2a2a;
+
+    --aoi-accent:         #f37321;
+    --aoi-accent-2:       #c45a0e;
+    --aoi-accent-rgb:     243, 115, 33;
+
+    --admin-sidebar:        #1f1f1f;
+    --admin-sidebar-hover:  #2f2f2f;
+    --admin-sidebar-active: #f37321;
+    --admin-sidebar-deep:   #0f0f0f;
+    --admin-sidebar-text:   #e5e7eb;
+    --admin-sidebar-muted:  #9ca3af;
+
+    --aoi-surface:   #ffffff;
+    --aoi-bg:        #f0f0f0;
+    --aoi-text:      #1a1a1a;
+    --aoi-muted:     #6b6b6b;
+    --aoi-border:    #d5d5d5;
+}
+
+/* ============================================================
+   5. PALETTE: ORANGE DEEP (برتقالي غامق)
+   ============================================================ */
+html[data-palette="orange-deep"] {
+    --aoi-primary:        #c45a0e;
+    --aoi-primary-2:      #f37321;
+    --aoi-primary-rgb:    196, 90, 14;
+    --aoi-primary-dark:   #8f3f06;
+
+    --aoi-accent:         #5b9bd5;
+    --aoi-accent-2:       #2e75b6;
+    --aoi-accent-rgb:     91, 155, 213;
+
+    --admin-sidebar:        #1a0e05;
+    --admin-sidebar-hover:  #2a160a;
+    --admin-sidebar-active: #f37321;
+    --admin-sidebar-deep:   #0f0703;
+    --admin-sidebar-text:   #f5e6d3;
+    --admin-sidebar-muted:  #a67c52;
+
+    --aoi-surface:   #ffffff;
+    --aoi-bg:        #faf5f0;
+    --aoi-text:      #1a0e05;
+    --aoi-muted:     #6b5240;
+    --aoi-border:    #e8d5c0;
+}
+
+/* ============================================================
+   6. DARK MODE OVERRIDES (يعمل مع أي palette)
+   ============================================================ */
+html.dark-boot,
+.admin-wrapper.dark-mode,
+body.dark-mode,
+[data-theme="dark"] {
+    --aoi-surface: #1a222d;
+    --aoi-bg:      #12161e;
+    --aoi-text:    #e2e8f0;
+    --aoi-muted:   #94a3b8;
+    --aoi-border:  #334155;
+    --aoi-shadow:  0 10px 28px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================
+   7. APPLY PALETTE TO COMMON ELEMENTS
+   ============================================================ */
+
+/* ---- Body ---- */
+body.admin-body {
+    font-size: var(--aoi-fs-base);
+    color: var(--aoi-text);
+    background: var(--aoi-bg);
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ---- Buttons ---- */
+.btn-primary {
+    background: linear-gradient(135deg, var(--aoi-primary), var(--aoi-primary-2)) !important;
+    border: none !important;
+    box-shadow: 0 8px 18px rgba(var(--aoi-primary-rgb), 0.18);
+    color: #fff !important;
+    transition: all 0.15s ease;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+.btn-outline-primary {
+    color: var(--aoi-primary) !important;
+    border-color: rgba(var(--aoi-primary-rgb), 0.45) !important;
+}
+.btn-outline-primary:hover {
+    background: rgba(var(--aoi-primary-rgb), 0.1) !important;
+    color: var(--aoi-primary) !important;
+}
+
+/* ---- Links ---- */
+a:not(.btn):not(.nav-link):not(.dropdown-item) {
+    color: var(--aoi-primary);
+    transition: color 0.15s ease;
+}
+a:not(.btn):not(.nav-link):not(.dropdown-item):hover {
+    color: var(--aoi-primary-dark);
+}
+
+/* ---- Text/Bg helpers ---- */
+.text-primary { color: var(--aoi-primary) !important; }
+.bg-primary { background-color: var(--aoi-primary) !important; }
+.bg-primary-subtle { background-color: rgba(var(--aoi-primary-rgb), 0.12) !important; }
+.border-primary, .border-primary-subtle {
+    border-color: rgba(var(--aoi-primary-rgb), 0.22) !important;
+}
+
+/* ---- Forms ---- */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--aoi-accent);
+    box-shadow: 0 0 0 0.2rem rgba(var(--aoi-primary-rgb), 0.15);
+}
+
+/* ============================================================
+   8. SIDEBAR
+   ============================================================ */
+.admin-sidebar {
+    background: linear-gradient(180deg, var(--admin-sidebar) 0%, var(--admin-sidebar-deep) 100%) !important;
+    transition: background 0.25s ease;
+}
+.admin-sidebar .brand-text,
+.admin-sidebar .brand-sub {
+    color: var(--admin-sidebar-text);
+}
+.admin-sidebar .brand-icon {
+    background: linear-gradient(135deg, var(--aoi-primary), var(--aoi-primary-2));
+    box-shadow: 0 4px 12px -2px rgba(var(--aoi-primary-rgb), 0.5);
+}
+.sidebar-nav .nav-link {
+    color: var(--admin-sidebar-text);
+}
+.sidebar-nav .nav-link:hover {
+    background: var(--admin-sidebar-hover) !important;
+    color: #fff;
+}
+.sidebar-nav .nav-link.active {
+    background: linear-gradient(100deg, var(--aoi-primary), var(--aoi-primary-2)) !important;
+    box-shadow: 0 8px 18px rgba(var(--aoi-primary-rgb), 0.22) !important;
+    color: #fff !important;
+}
+.sidebar-nav .nav-link.active i {
+    color: #fff !important;
+}
+.sidebar-nav .nav-link.active::before {
+    background: #fff;
+}
+.nav-active-dot {
+    background: var(--admin-sidebar-active) !important;
+}
+.sidebar-section-label {
+    color: var(--admin-sidebar-muted);
+}
+
+/* ============================================================
+   9. NAVBAR
+   ============================================================ */
+.ao-navbar {
+    background: color-mix(in srgb, var(--aoi-surface) 88%, transparent) !important;
+    backdrop-filter: blur(16px) saturate(1.2);
+    border-bottom: 1px solid var(--aoi-border);
+}
+.ao-navbar .page-title {
+    color: var(--aoi-text) !important;
+}
+.ao-page-kicker {
+    color: var(--aoi-primary);
+}
+.ao-icon-btn {
+    background: var(--aoi-surface) !important;
+    border-color: var(--aoi-border) !important;
+    color: var(--aoi-text) !important;
+}
+.ao-icon-btn:hover {
+    border-color: rgba(var(--aoi-primary-rgb), 0.45) !important;
+    color: var(--aoi-primary) !important;
+}
+.ao-chip-btn {
+    background: var(--aoi-surface) !important;
+    border-color: var(--aoi-border) !important;
+    color: var(--aoi-text) !important;
+}
+.ao-chip-btn:hover {
+    border-color: rgba(var(--aoi-primary-rgb), 0.45) !important;
+    color: var(--aoi-primary) !important;
+}
+.ao-cta {
+    background: linear-gradient(135deg, var(--aoi-primary), var(--aoi-primary-2)) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(var(--aoi-primary-rgb), 0.18);
+}
+.ao-search input {
+    background: var(--aoi-bg) !important;
+    border-color: var(--aoi-border) !important;
+    color: var(--aoi-text) !important;
+}
+.ao-search input:focus {
+    border-color: var(--aoi-accent) !important;
+    background: var(--aoi-surface) !important;
+    box-shadow: 0 0 0 0.2rem rgba(var(--aoi-primary-rgb), 0.14) !important;
+}
+.ao-avatar {
+    background: linear-gradient(135deg, var(--aoi-primary), var(--aoi-primary-2));
+    color: #fff;
+}
+.ao-user {
+    background: var(--aoi-surface) !important;
+    border-color: var(--aoi-border) !important;
+    color: var(--aoi-text) !important;
+}
+.ao-menu {
+    background: var(--aoi-surface) !important;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14) !important;
+}
+.ao-menu .dropdown-item {
+    color: var(--aoi-text);
+}
+.ao-menu .dropdown-item:hover,
+.ao-menu .dropdown-item.active {
+    background: rgba(var(--aoi-primary-rgb), 0.1) !important;
+    color: var(--aoi-primary) !important;
+}
+
+/* ============================================================
+   10. CARDS / PANELS / KPI
+   ============================================================ */
+.card,
+.kpi-card,
+.panel-card,
+.module-card-v2 {
+    background: var(--aoi-surface);
+    border: 1px solid var(--aoi-border);
+    border-radius: var(--aoi-radius);
+    box-shadow: var(--aoi-shadow);
+    color: var(--aoi-text);
+    transition: all 0.2s ease;
+}
+
+.kpi-card {
+    border-top: 3px solid var(--aoi-primary);
+}
+.kpi-label { color: var(--aoi-muted); }
+.kpi-value { color: var(--aoi-text); }
+.kpi-icon {
+    color: var(--aoi-primary) !important;
+    background: rgba(var(--aoi-primary-rgb), 0.12) !important;
+}
+
+.module-card-v2:hover {
+    border-color: rgba(var(--aoi-primary-rgb), 0.45);
+    box-shadow: 0 16px 36px rgba(var(--aoi-primary-rgb), 0.15);
+}
+.module-card-icon {
+    color: var(--aoi-primary);
+    background: rgba(var(--aoi-primary-rgb), 0.12);
+    border: 1px solid rgba(var(--aoi-primary-rgb), 0.18);
+}
+.module-card-v2-cta {
+    color: var(--aoi-primary);
+    border-top-color: rgba(var(--aoi-primary-rgb), 0.25);
+}
+
+/* ============================================================
+   11. DASHBOARD HERO
+   ============================================================ */
+.dash-hero,
+.dash-v3-hero,
+.mfg-header,
+.mod-index-hero,
+.tm-hero,
+.upload-hero,
+.ip-hero,
+.rd-hero,
+.ao-detail-hero {
+    background: linear-gradient(135deg,
+        var(--aoi-primary) 0%,
+        var(--aoi-primary-2) 55%,
+        var(--aoi-accent) 100%) !important;
+    color: #fff;
+    box-shadow: 0 14px 32px rgba(var(--aoi-primary-rgb), 0.2);
+}
+.dash-hero-title,
+.dash-v3-title,
+.mfg-header h1,
+.mod-index-title,
+.tm-hero-title,
+.upload-hero-title,
+.ip-hero-title,
+.rd-hero-title,
+.ao-detail-title {
+    color: #fff !important;
+}
+.dash-v3-kicker,
+.mod-index-kicker,
+.tm-hero-kicker,
+.upload-hero-kicker,
+.ip-hero-kicker,
+.rd-badge {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+.mod-index-btn-primary,
+.tm-hero-btn-primary,
+.upload-btn-primary,
+.ip-btn-success,
+.rd-hero-btn-primary {
+    background: #fff !important;
+    color: var(--aoi-primary) !important;
+    border-color: #fff !important;
+}
+
+/* ============================================================
+   12. TABLES
+   ============================================================ */
+.table thead th {
+    background: rgba(var(--aoi-primary-rgb), 0.06);
+    color: var(--aoi-primary);
+}
+.table tbody tr:hover {
+    background: rgba(var(--aoi-primary-rgb), 0.04);
+}
+.tm-data-table thead th {
+    color: var(--aoi-primary);
+}
+.tm-data-table thead th.sortable:hover {
+    background: rgba(var(--aoi-primary-rgb), 0.08);
+    color: var(--aoi-primary);
+}
+.tm-data-table thead th.sorted-asc .sort-icon,
+.tm-data-table thead th.sorted-desc .sort-icon {
+    color: var(--aoi-primary);
+}
+.tm-data-table tbody tr.selected {
+    background: rgba(var(--aoi-primary-rgb), 0.08);
+}
+
+/* ============================================================
+   13. BADGES
+   ============================================================ */
+.badge.bg-primary-subtle {
+    color: var(--aoi-primary) !important;
+    border-color: rgba(var(--aoi-primary-rgb), 0.25) !important;
+}
+.tm-toolbar-count,
+.rd-toolbar-count,
+.ip-panel-count {
+    background: rgba(var(--aoi-primary-rgb), 0.12) !important;
+    color: var(--aoi-primary) !important;
+}
+
+/* ============================================================
+   14. CHARTS
+   ============================================================ */
+.chart-total-pill {
+    background: rgba(var(--aoi-primary-rgb), 0.1);
+    color: var(--aoi-primary);
+}
+.chart-export-btn:hover {
+    background: var(--aoi-primary);
+    border-color: var(--aoi-primary);
+    color: #fff;
+}
+
+/* ============================================================
+   15. BREADCRUMB
+   ============================================================ */
+.admin-breadcrumb::before {
+    background: linear-gradient(180deg, var(--aoi-primary), var(--aoi-accent));
+}
+.admin-breadcrumb .breadcrumb-home a {
+    color: var(--aoi-primary);
+}
+.admin-breadcrumb .breadcrumb-home a:hover {
+    background: rgba(var(--aoi-primary-rgb), 0.1);
+    color: var(--aoi-primary);
+}
+.admin-breadcrumb .breadcrumb-item a:hover {
+    background: rgba(var(--aoi-primary-rgb), 0.08);
+    color: var(--aoi-primary);
+}
+.admin-breadcrumb .breadcrumb-item.active i {
+    color: var(--aoi-primary);
+}
+
+/* ============================================================
+   16. PALETTE SWITCHER (Left Dock)
+   ============================================================ */
+.ao-palette-dock {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1100;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+.ao-palette-toggle {
+    width: 44px;
+    height: 52px;
+    border: none;
+    background: linear-gradient(160deg, var(--aoi-primary), var(--aoi-primary-2));
+    color: #fff;
+    border-radius: 0 14px 14px 0;
+    box-shadow: 4px 0 20px rgba(var(--aoi-primary-rgb), 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.ao-palette-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 4px 0 25px rgba(var(--aoi-primary-rgb), 0.4);
+}
+.ao-palette-panel {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    background: var(--aoi-surface);
+    border: 1px solid transparent;
+    border-left: none;
+    border-radius: 0 16px 16px 0;
+    transition: width 0.25s ease, opacity 0.2s ease, padding 0.2s ease;
+}
+.ao-palette-dock.open .ao-palette-panel {
+    width: 190px;
+    opacity: 1;
+    padding: 0.85rem 0.9rem 1rem;
+    border-color: var(--aoi-border);
+    box-shadow: 8px 0 28px rgba(15, 23, 42, 0.12);
+}
+.ao-palette-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 750;
+    color: var(--aoi-text);
+    margin-bottom: 0.6rem;
+}
+.ao-palette-close {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--aoi-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+.ao-palette-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--aoi-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0.5rem 0 0.35rem;
+}
+.ao-palette-swatches {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.ao-swatch {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    height: 40px;
+    padding: 0 0.6rem;
+    border-radius: 10px;
+    border: 1px solid var(--aoi-border);
+    background: transparent;
+    cursor: pointer;
+    text-align: start;
+    transition: all 0.15s ease;
+}
+.ao-swatch::before {
+    content: "";
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--sw);
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+.ao-swatch span {
+    font-size: 12.5px;
+    font-weight: 650;
+    color: var(--aoi-text);
+}
+.ao-swatch.active {
+    border-color: var(--sw);
+    background: color-mix(in srgb, var(--sw) 14%, transparent);
+    box-shadow: inset 3px 0 0 var(--sw);
+}
+.ao-swatch:hover {
+    border-color: var(--sw);
+    transform: translateX(2px);
+}
+.ao-palette-modes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.ao-mode-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid var(--aoi-border);
+    background: transparent;
+    color: var(--aoi-text);
+    font-size: 12.5px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.ao-mode-btn:hover,
+.ao-mode-btn.active {
+    border-color: var(--aoi-primary);
+    color: var(--aoi-primary);
+    background: rgba(var(--aoi-primary-rgb), 0.1);
+}
+
+/* ============================================================
+   17. RESPONSIVE
+   ============================================================ */
+@media (max-width: 575.98px) {
+    .ao-palette-dock {
+        top: auto;
+        bottom: 16px;
+        transform: none;
+    }
+    .ao-palette-toggle {
+        border-radius: 14px 0 0 14px;
+    }
+    .ao-palette-dock.open .ao-palette-panel {
+        border-radius: 16px 0 0 16px;
+    }
+}
+
+/* ============================================================
+   18. REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
