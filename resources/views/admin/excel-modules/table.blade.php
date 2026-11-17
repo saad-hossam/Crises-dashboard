@@ -47,10 +47,7 @@
                     <span><i class="bi bi-table"></i> {{ $config['table'] }}</span>
                 </div>
                 <div class="tm-hero-actions">
-                    <a href="{{ route('admin.excel-modules.export', ['module' => $moduleCode] + request()->query()) }}"
-                        class="tm-hero-btn">
-                        <i class="bi bi-file-earmark-excel"></i> تصدير
-                    </a>
+                   
                     <a href="{{ route('admin.excel-modules.create') }}" class="tm-hero-btn tm-hero-btn-primary">
                         <i class="bi bi-upload"></i> استيراد
                     </a>
