@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Services\TypedExcelImporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -159,7 +160,7 @@ class ExcelModuleController extends Controller
         }
 
         if (!$path || !Storage::disk('local')->exists($path)) {
-            return redirect()->route('admin.excel-modules.create')
+            return redirect('/admin/excel-modules/upload')
                 ->withErrors(['excel_file' => 'لا توجد معاينة حالية. ارفع الملف من جديد.']);
         }
 
@@ -231,7 +232,7 @@ class ExcelModuleController extends Controller
         }
 
         if (!$path || !Storage::disk('local')->exists($path)) {
-            return redirect()->route('admin.excel-modules.create')
+            return redirect('/admin/excel-modules/upload')
                 ->withErrors(['error' => 'انتهت صلاحية المعاينة، ارفع الملف مرة أخرى.']);
         }
 
@@ -239,42 +240,92 @@ class ExcelModuleController extends Controller
 
         @set_time_limit(0);
         @ini_set('memory_limit', '1024M');
+        @ini_set('max_execution_time', '0');
 
         // حافظ على هوية المستخدم قبل عمليات طويلة
-        $userId = auth()->id() ?? ($payload['user_id'] ?? 1);
+        $userId = (int) (auth()->id() ?? ($payload['user_id'] ?? 0));
+        if ($userId < 1) {
+            $userId = 1;
+        }
+
+        // حرّر قفل ملف الجلسة قبل الاستيراد الطويل حتى لا تُفسَد الجلسة
+        try {
+            $request->session()->save();
+        } catch (\Throwable $e) {
+            // ignore
+        }
+        if (\function_exists('session_write_close')) {
+            @session_write_close();
+        }
 
         try {
             $batch = $this->importer->import(
                 storedPath:       $path,
                 originalFilename: $originalName ?? 'upload.xlsx',
-                userId:           (int) $userId,
+                userId:           $userId,
                 replaceExisting:  $replace
             );
         } catch (\Throwable $e) {
             $msg = $e->getMessage();
-            if (strlen($msg) > 500) $msg = substr($msg, 0, 500) . '…';
-            return redirect()
-                ->route('admin.excel-modules.create')
+            if (strlen($msg) > 500) {
+                $msg = substr($msg, 0, 500) . '…';
+            }
+            $this->restoreAuthAfterLongJob($request, $userId);
+            return redirect('/admin/excel-modules/upload')
                 ->withErrors(['error' => $msg]);
         }
 
-        session()->forget(['excel_stored_path', 'excel_original_name', 'excel_import_ticket']);
+        // بعد الاستيراد الطويل: أعد تثبيت تسجيل الدخول دائماً
+        $this->restoreAuthAfterLongJob($request, $userId);
+
+        try {
+            $request->session()->forget([
+                'excel_stored_path',
+                'excel_original_name',
+                'excel_import_ticket',
+                'excel_import_payload',
+            ]);
+        } catch (\Throwable $e) {
+            // ignore
+        }
         Cache::forget('excel_preview_' . md5($path));
         if ($ticket) {
             Cache::forget('excel_import_ticket_' . $ticket);
         }
 
         $code = $batch->module_code ?? null;
+        $rows = (int) ($batch->imported_rows ?? 0);
+        $msg  = "تم استيراد {$rows} صف بنجاح" . ($code ? " إلى {$code}" : '');
+
         if (!$code || !config('excel_modules.' . $code)) {
-            return redirect()
-                ->route('admin.excel-modules.index')
-                ->with('success', 'تم الاستيراد بنجاح (' . ($batch->imported_rows ?? 0) . ' صف).');
+            return redirect('/admin/excel-modules')
+                ->with('success', $msg);
         }
 
-        // رابط نسبي يحافظ على نفس الـ host/port (127.0.0.1:8000 vs localhost)
         return redirect('/admin/excel-modules/table/' . $code)
-            ->with('success', "تم استيراد {$batch->imported_rows} صف إلى جدول {$code} بنجاح.");
+            ->with('success', $msg);
     }
+
+    /**
+     * بعد عملية استيراد طويلة قد تُغلق الجلسة أو تُفقد.
+     * نعيد تسجيل دخول المستخدم صراحةً قبل أي redirect.
+     */
+    protected function restoreAuthAfterLongJob(Request $request, int $userId): void
+    {
+        try {
+            if ($userId > 0 && ! Auth::check()) {
+                Auth::loginUsingId($userId, true);
+            }
+            if ($userId > 0 && Auth::id() !== $userId) {
+                Auth::loginUsingId($userId, true);
+            }
+            $request->session()->put('login_ok_at', now()->toIso8601String());
+            $request->session()->save();
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
 
     /* ---------- Custom table ---------- */
     public function showTable(string $moduleCode, Request $request)

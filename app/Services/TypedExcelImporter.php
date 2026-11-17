@@ -152,6 +152,7 @@ class TypedExcelImporter
             ]);
 
             DB::beginTransaction();
+            $rowsSinceCommit = 0;
 
             $targetHeaderIndex = (int) $scan['header_row_index'];
             if (!$usePositional) {
@@ -253,7 +254,13 @@ class TypedExcelImporter
 
                     if (count($chunkBuffer) >= self::CHUNK_SIZE) {
                         DB::table($tableName)->insert($chunkBuffer);
+                        $rowsSinceCommit += count($chunkBuffer);
                         $chunkBuffer = [];
+                        if ($rowsSinceCommit >= 800) {
+                            DB::commit();
+                            DB::beginTransaction();
+                            $rowsSinceCommit = 0;
+                        }
                         if ($imported % self::COMMIT_EVERY === 0) {
                             DB::commit();
                             DB::beginTransaction();
