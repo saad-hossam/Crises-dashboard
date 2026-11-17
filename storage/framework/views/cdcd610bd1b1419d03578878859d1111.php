@@ -21,12 +21,23 @@
     $colLabel = function (string $col) use ($labelMap): string {
         return $labelMap[$col] ?? str_replace('_', ' ', $col);
     };
+
+    // ✅ خريطة الترجمة الكاملة (raw key => Arabic label) للاستخدام في JS
+    $columnLabelsJs = [];
+    foreach (($columns ?? []) as $col) {
+        $columnLabelsJs[$col] = $colLabel($col);
+    }
 ?>
 
 
 
 <?php $__env->startSection('content'); ?>
     <div class="tm-page" dir="rtl">
+
+        
+        <script>
+            window.TM_COLUMN_LABELS = <?php echo json_encode($columnLabelsJs, 15, 512) ?>;
+        </script>
 
         
         <div class="tm-hero">
@@ -46,10 +57,7 @@
                     <span><i class="bi bi-table"></i> <?php echo e($config['table']); ?></span>
                 </div>
                 <div class="tm-hero-actions">
-                    <a href="<?php echo e(route('admin.excel-modules.export', ['module' => $moduleCode] + request()->query())); ?>"
-                        class="tm-hero-btn">
-                        <i class="bi bi-file-earmark-excel"></i> تصدير
-                    </a>
+                   
                     <a href="<?php echo e(route('admin.excel-modules.create')); ?>" class="tm-hero-btn tm-hero-btn-primary">
                         <i class="bi bi-upload"></i> استيراد
                     </a>
@@ -356,21 +364,18 @@
             const isRtl = document.documentElement.dir === 'rtl';
 
             // ==================== ✅ ألوان فريدة — Golden Angle ====================
-            // توزّع الألوان على عجلة HSL بزاوية 137.508° (توزيع فيبوناتشي الذهبي)
-            // يضمن أن كل لون مختلف بصريًا حتى مع 50+ عنصرًا
             function generateDistinctColors(count) {
                 const colors = [];
                 const goldenAngle = 137.508;
                 for (let i = 0; i < count; i++) {
                     const hue = (i * goldenAngle) % 360;
-                    const saturation = 65 + (i % 3) * 8; // 65% – 81%
-                    const lightness = 50 + (i % 4) * 5; // 50% – 65%
+                    const saturation = 65 + (i % 3) * 8;
+                    const lightness = 50 + (i % 4) * 5;
                     colors.push(`hsl(${hue.toFixed(1)}, ${saturation}%, ${lightness}%)`);
                 }
                 return colors;
             }
 
-            // نسخة أفتح (للحدود)
             function lightenColor(hsl, amount = 20) {
                 const m = hsl.match(/hsl\(([\d.]+),\s*([\d.]+)%,\s*([\d.]+)%\)/);
                 if (!m) return hsl;
@@ -396,7 +401,6 @@
                 const isDonut = type === 'doughnut' || type === 'pie';
                 const isLine = type === 'line';
 
-                // ✅ ألوان فريدة لكل عنصر
                 const uniqueColors = generateDistinctColors(Math.max(labs.length, 1));
                 const borderColors = uniqueColors.map(c => lightenColor(c, 20));
 
@@ -447,40 +451,22 @@
                                 labels: {
                                     boxWidth: 12,
                                     boxHeight: 12,
-                                    font: {
-                                        size: 10
-                                    },
+                                    font: { size: 10 },
                                     padding: 6,
                                     usePointStyle: true,
                                 }
                             },
-                            tooltip: {
-                                rtl: isRtl
-                            }
+                            tooltip: { rtl: isRtl }
                         },
                         scales: isDonut ? {} : {
                             x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 9
-                                    },
-                                    maxRotation: 35
-                                }
+                                grid: { display: false },
+                                ticks: { font: { size: 9 }, maxRotation: 35 }
                             },
                             y: {
                                 beginAtZero: true,
-                                ticks: {
-                                    precision: 0,
-                                    font: {
-                                        size: 10
-                                    }
-                                },
-                                grid: {
-                                    color: 'rgba(15,23,42,.06)'
-                                }
+                                ticks: { precision: 0, font: { size: 10 } },
+                                grid: { color: 'rgba(15,23,42,.06)' }
                             }
                         }
                     }
@@ -509,11 +495,7 @@
 
                 function escapeHtml(s) {
                     return String(s).replace(/[&<>"']/g, c => ({
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&quot;',
-                        "'": '&#39;'
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
                     } [c]));
                 }
 
@@ -552,9 +534,7 @@
                     items.forEach(el => el.classList.remove('active'));
                     if (idx >= 0 && idx < items.length) {
                         items[idx].classList.add('active');
-                        items[idx].scrollIntoView({
-                            block: 'nearest'
-                        });
+                        items[idx].scrollIntoView({ block: 'nearest' });
                         activeIndex = idx;
                     }
                 }
@@ -595,7 +575,7 @@
                 });
             })();
 
-            // ==================== COLUMN MANAGER ====================
+            // ==================== ✅ COLUMN MANAGER (مترجم) ====================
             (function() {
                 const STORAGE_KEY = 'tm-columns-<?php echo e($moduleCode); ?>';
                 const DENSITY_KEY = 'tm-density-<?php echo e($moduleCode); ?>';
@@ -608,6 +588,16 @@
                 const selectAll = document.getElementById('tmSelectAll');
                 const wrapper = document.getElementById('tmTableWrapper');
                 if (!table) return;
+
+                // ✅ خريطة الترجمة من الباك-إند
+                const COL_LABELS = window.TM_COLUMN_LABELS || {};
+                const labelFor = (col) => COL_LABELS[col] || col.replace(/_/g, ' ');
+
+                function escapeHtml(s) {
+                    return String(s).replace(/[&<>"']/g, c => ({
+                        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                    } [c]));
+                }
 
                 const allHeaders = [...table.querySelectorAll('thead th[data-col]')].map(th => th.dataset.col);
 
@@ -626,9 +616,9 @@
                 function buildColManager() {
                     const hidden = loadHidden();
                     colManagerList.innerHTML = allHeaders.map(h => `
-                <label>
-                    <input type="checkbox" data-col="${h}" ${hidden.includes(h) ? '' : 'checked'}>
-                    <span>${h.replace(/_/g, ' ')}</span>
+                <label title="${escapeHtml(h)}">
+                    <input type="checkbox" data-col="${escapeHtml(h)}" ${hidden.includes(h) ? '' : 'checked'}>
+                    <span>${escapeHtml(labelFor(h))}</span>
                 </label>
             `).join('');
                     colManagerList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -1750,5 +1740,4 @@
         }
     </style>
 <?php $__env->stopPush(); ?>
-
 <?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\pc\Music\Crises-dashboard\Crises-dashboard\resources\views/admin/excel-modules/table.blade.php ENDPATH**/ ?>
