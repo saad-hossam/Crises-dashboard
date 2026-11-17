@@ -154,10 +154,7 @@
                     <i class="bi bi-clipboard"></i>
                     <span>نسخ الكل</span>
                 </button>
-                <button type="button" class="rd-hero-btn" id="rdDownloadJson">
-                    <i class="bi bi-download"></i>
-                    <span>تحميل JSON</span>
-                </button>
+              
                 <a href="{{ route('admin.excel-modules.table', $moduleCode) }}"
                    class="rd-hero-btn rd-hero-btn-primary">
                     <i class="bi bi-arrow-{{ app()->getLocale()==='ar' ? 'right' : 'left' }}"></i>
